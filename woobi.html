@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woobi OS: Lexicon & Translation Engine</title>
+    <style>
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #222;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex-grow: 1;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: background 0.3s;
+        }
+        .btn-add { background-color: #4CAF50; }
+        .btn-add:hover { background-color: #45a049; }
+        .btn-delete { background-color: #f44336; }
+        .btn-delete:hover { background-color: #da190b; }
+        .btn-translate { background-color: #2196F3; }
+        .btn-translate:hover { background-color: #0b7dda; }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr { cursor: pointer; }
+        tr:hover { background-color: #f9f9f9; }
+        tr.selected { background-color: #d1e7dd; }
+
+        .output-box {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fafafa;
+            font-size: 16px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        .red-bracket { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Woobi Core Engine</h1>
+
+    <div class="container">
+        <div class="input-group">
+            <label>English Word:</label>
+            <input type="text" id="engInput" placeholder="e.g. Hello">
+            <label>Woobi:</label>
+            <input type="text" id="wooInput" placeholder="e.g. alo">
+            <label>Pronunciation:</label>
+            <input type="text" id="pronInput" placeholder="e.g. ah-loh">
+            <button class="btn-add" onclick="addWord()">Add</button>
+            <button class="btn-delete" onclick="deleteWord()">Delete Selected</button>
+        </div>
+
+        <div class="input-group">
+            <label>Search Dictionary:</label>
+            <input type="text" id="searchInput" placeholder="Search..." oninput="onSearch()">
+        </div>
+
+        <div class="table-container">
+            <table id="dictTable">
+                <thead>
+                    <tr>
+                        <th>English Concept</th>
+                        <th>Woobi Word</th>
+                        <th>Pronunciation</th>
+                    </tr>
+                </thead>
+                <tbody id="dictBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Woobi Sentence Translator</h2>
+        <div class="input-group">
+            <label>English Sentence:</label>
+            <input type="text" id="sentenceInput" placeholder="Type sentence here..." onkeypress="handleEnter(event)">
+            <button class="btn-translate" onclick="translateSentence()">Translate</button>
+        </div>
+        <div id="outputBox" class="output-box"></div>
+    </div>
+
+<script>
+// --- THE DEFAULT DATABASE (200+ Words) ---
+const DEFAULT_WOOBI_DB = [
+    // --- ORIGINAL 100 (Single Syllable & Core Markers) ---
+    ["I / Me", "ə", "uh (neutral relaxed)"],
+    ["You", "a", "ah (jaw drop)"],
+    ["He / She", "i", "ee (slight smile)"],
+    ["It / That / The", "hə", "huh (breath)"],
+    ["We", "mi", "mee (lips to smile)"],
+    ["They / All", "dE", "deh (tongue tap)"],
+    ["This", "ha", "hah (breath open)"],
+    ["Plural Marker", "te", "teh (soft t)"],
+    ["Past Marker", "pa", "pah (lip pop)"],
+    ["Future Marker", "nu", "noo (lip round)"],
+    ["Question Marker", "ka", "kah (soft k)"],
+    ["Yes", "mə", "muh (lip hum)"],
+    ["No / Not", "na", "nah (nasal open)"],
+    ["And", "n", "nn (tongue resting)"],
+    ["But", "bə", "buh (soft b)"],
+    ["To / For", "tə", "tuh (tongue tap)"],
+    ["In / Inside", "ni", "nee (nasal smile)"],
+    ["On / Above", "na", "nah (nasal open)"],
+    ["With", "wi", "wee (lip flare)"],
+    ["Is / Am / Are", "m", "mm (closed hum)"],
+    ["Have / Own", "ha", "hah (breath)"],
+    ["Do / Make", "wa", "wah (lips opening)"],
+    ["Go / Move", "wə", "wuh (lazy w)"],
+    ["Come", "kə", "kuh (soft throat tap)"],
+    ["Say / Speak", "sə", "suh (soft hiss)"],
+    ["See / Look", "sa", "sah (hiss to open)"],
+    ["Take / Get", "ta", "tah (tongue tap)"],
+    ["Good", "ba", "bah (lip pop open)"],
+    ["Bad", "bO", "boh (lip pop round)"],
+    ["Big / Large", "la", "lah (tongue tap open)"],
+    ["Small / Little", "mO", "moh (nasal round)"],
+    ["Time", "ta", "tah (tongue tap)"],
+    ["Person / Man", "ma", "mah (nasal open)"],
+    ["Thing", "ti", "tee (tongue tap smile)"],
+    ["Way / Path", "we", "weh (lip flare)"],
+    ["Day", "de", "deh (tongue tap)"],
+    ["World", "wə", "wuh (lazy w)"],
+    ["Place", "pe", "peh (lip pop)"],
+    ["Water", "wa", "wah (lip flare open)"],
+    ["Fire", "fa", "fah (lip blow)"],
+    ["Or", "o", "oh (lip round)"],
+    ["If", "fi", "fee (lip to teeth)"],
+    ["From", "fə", "fuh (soft blow)"],
+    ["By", "bi", "bee (lips closed to open)"],
+    ["At", "ta", "tah (tongue tap open)"],
+    ["Know / Think", "nO", "noh (nasal round)"],
+    ["Give", "gi", "gee (throat to smile)"],
+    ["Want / Need", "wO", "woh (lip round)"],
+    ["Use", "ju", "yoo (tongue glide)"],
+    ["Find", "fa", "fah (soft blow open)"],
+    ["Tell", "te", "teh (tongue tap)"],
+    ["Work", "wo", "woh (lip flare)"],
+    ["Try", "ti", "tee (tongue tap smile)"],
+    ["Leave", "li", "lee (tongue curl)"],
+    ["Call", "ko", "koh (throat tap round)"],
+    ["Feel", "fi", "fee (lip blow)"],
+    ["Become", "bi", "bee (lip pop)"],
+    ["Put", "pu", "poo (lip blow out)"],
+    ["Mean", "mi", "mee (nasal smile)"],
+    ["Keep", "ki", "kee (throat tap)"],
+    ["Let", "le", "leh (tongue tap)"],
+    ["Begin", "be", "beh (lip pop)"],
+    ["Help", "he", "heh (breath)"],
+    ["Show", "So", "shoh (soft sh)"],
+    ["Hear", "hi", "hee (breath smile)"],
+    ["Play", "pe", "peh (lip pop)"],
+    ["Run", "rə", "ruh (lazy r)"],
+    ["New", "nu", "noo (nasal round)"],
+    ["Old", "O", "oh (relaxed round)"],
+    ["High / Up", "hi", "hee (breath smile)"],
+    ["Low / Down", "lo", "loh (tongue tap round)"],
+    ["Hot", "ha", "hah (breath open)"],
+    ["Cold", "ko", "koh (throat tap round)"],
+    ["Fast", "fa", "fah (lip blow open)"],
+    ["Slow", "sO", "soh (hiss round)"],
+    ["Right / True", "ri", "ree (lazy r smile)"],
+    ["Wrong / False", "rO", "roh (lazy r round)"],
+    ["Happy", "ha", "hah (breath open)"],
+    ["Sad", "sa", "sah (hiss open)"],
+    ["First", "fə", "fuh (soft blow)"],
+    ["Last", "la", "lah (tongue tap)"],
+    ["Same", "se", "seh (hiss)"],
+    ["Different", "di", "dee (tongue tap smile)"],
+    ["Important", "po", "poh (lip pop round)"],
+    ["Life", "la", "lah (tongue tap)"],
+    ["Hand", "ha", "hah (breath)"],
+    ["Part", "pa", "pah (lip pop open)"],
+    ["Child", "ca", "chah (soft ch)"],
+    ["Eye", "ai", "eye (glide)"],
+    ["Work / Job", "wo", "woh (lip flare)"],
+    ["Week", "wi", "wee (lip flare smile)"],
+    ["Group", "gu", "goo (throat tap round)"],
+    ["Problem", "po", "poh (lip pop round)"],
+    ["Fact", "fa", "fah (lip blow)"],
+    ["Idea", "ai", "eye (glide)"],
+    ["Food", "fu", "foo (lip blow round)"],
+    ["Earth / Ground", "ə", "uh (neutral)"],
+    ["Air / Wind", "he", "heh (breath)"],
+    ["Mind", "ma", "mah (nasal open)"],
+
+    // --- THE NEXT 100 (CVCV Minimal Combinations) ---
+    ["Fly / Drone", "pupi", "poo-pee (lip pop to smile)"],
+    ["Draw / Design", "tutu", "too-too (double tongue tap)"],
+    ["Machine / Tool", "gugu", "goo-goo (double throat tap)"],
+    ["Network / Connect", "nini", "nee-nee (double nasal smile)"],
+    ["Rest / Sleep", "mumu", "moo-moo (closed double hum)"],
+    ["Health / Energy", "bəbə", "buh-buh (lazy double pop)"],
+    ["Smoke / Fog", "huhu", "hoo-hoo (double breath round)"],
+    ["City / Town", "kuku", "koo-koo (throat tap round)"],
+    ["Money / Value", "mami", "mah-mee (open to smile nasal)"],
+    ["Paper / Book", "pata", "pah-tah (lip to tongue)"],
+    ["Learn / Study", "kipa", "kee-pah (throat to lip)"],
+    ["Music / Song", "lala", "lah-lah (tongue curl open)"],
+    ["Room / Space", "buku", "boo-koo (lip to throat)"],
+    ["Friend", "pəna", "puh-nah (lip to nasal)"],
+    ["Love", "muba", "moo-bah (hum to open pop)"],
+    ["Animal", "batu", "bah-too (pop to tap)"],
+    ["Plant / Tree", "puti", "poo-tee (blow to smile)"],
+    ["Color", "kama", "kah-mah (throat to nasal)"],
+    ["Light / Sun", "hata", "hah-tah (breath to tap)"],
+    ["Dark / Night", "dudu", "doo-doo (tongue tap round)"],
+    ["Hard / Solid", "taka", "tah-kah (tap to throat)"],
+    ["Soft / Liquid", "mulu", "moo-loo (hum to glide)"],
+    ["Clean", "pipi", "pee-pee (lip smile)"],
+    ["Dirty", "gaba", "gah-bah (throat to lip)"],
+    ["Full", "bubu", "boo-boo (lip round)"],
+    ["Empty", "huhu", "hoo-hoo (breath round)"],
+    ["Heavy", "daba", "dah-bah (tap to pop)"],
+    ["Lightweight", "puhu", "poo-hoo (blow to breath)"],
+    ["Open", "paba", "pah-bah (lip double open)"],
+    ["Closed", "tuku", "too-koo (tap to throat)"],
+    ["Start", "bigi", "bee-gee (pop to throat)"],
+    ["Stop", "putu", "poo-too (blow to tap)"],
+    ["Win", "wawa", "wah-wah (lip flare double)"],
+    ["Lose", "nana", "nah-nah (nasal open)"],
+    ["Buy", "gipa", "gee-pah (throat to lip)"],
+    ["Sell", "pagi", "pah-gee (lip to throat)"],
+    ["Build / Create", "kutu", "koo-too (throat to tap)"],
+    ["Break / Destroy", "kaka", "kah-kah (throat open)"],
+    ["Wait", "titi", "tee-tee (tap smile)"],
+    ["Move", "wuwu", "woo-woo (lip round double)"],
+    ["Read", "nipa", "nee-pah (nasal to lip)"],
+    ["Write", "tipa", "tee-pah (tap to lip)"],
+    ["Eat", "məmu", "muh-moo (lazy hum)"],
+    ["Drink", "wata", "wah-tah (flare to tap)"],
+    ["Walk", "pata", "pah-tah (lip to tap)"],
+    ["Talk / Converse", "susu", "soo-soo (hiss round)"],
+    ["Listen", "hini", "hee-nee (breath to nasal)"],
+    ["Watch / Stare", "sasa", "sah-sah (hiss open)"],
+    ["Understand", "nəna", "nuh-nah (lazy nasal)"],
+    ["Remember", "mimi", "mee-mee (nasal smile)"],
+    ["Forget", "fufu", "foo-foo (soft blow double)"],
+    ["Question", "kaku", "kah-koo (throat to round)"],
+    ["Answer", "tada", "tah-dah (tap open double)"],
+    ["Reason / Why", "hawa", "hah-wah (breath to flare)"],
+    ["Because", "bika", "bee-kah (pop to throat)"],
+    ["Always", "tawa", "tah-wah (tap to flare)"],
+    ["Never", "nawa", "nah-wah (nasal to flare)"],
+    ["Sometimes", "tama", "tah-mah (tap to nasal)"],
+    ["Soon", "nuta", "noo-tah (nasal to tap)"],
+    ["Later", "latə", "lah-tuh (glide to lazy)"],
+    ["Early", "fata", "fah-tah (blow to tap)"],
+    ["Late", "tula", "too-lah (tap to glide)"],
+    ["Near", "nini", "nee-nee (nasal smile)"],
+    ["Far", "fafa", "fah-fah (blow open double)"],
+    ["Up", "pupu", "poo-poo (blow round)"],
+    ["Down", "dudu", "doo-doo (tap round)"],
+    ["Left", "lefa", "leh-fah (glide to blow)"],
+    ["Right", "raita", "rye-tah (glide to tap)"],
+    ["Front", "fana", "fah-nah (blow to nasal)"],
+    ["Back", "baka", "bah-kah (pop to throat)"],
+    ["Side", "sida", "see-dah (hiss to tap)"],
+    ["Center", "mida", "mee-dah (nasal to tap)"],
+    ["Top", "tapa", "tah-pah (tap to pop)"],
+    ["Bottom", "bata", "bah-tah (pop to tap)"],
+    ["Inside", "nisa", "nee-sah (nasal to hiss)"],
+    ["Outside", "sauta", "sow-tah (hiss to tap)"],
+    ["Shape", "sapa", "sah-pah (hiss to pop)"],
+    ["Line", "lana", "lah-nah (glide to nasal)"],
+    ["Circle", "lulu", "loo-loo (glide round double)"],
+    ["Square", "kaba", "kah-bah (throat to pop)"],
+    ["Number", "nuba", "noo-bah (nasal to pop)"],
+    ["One", "wa", "wah (flare open)"],
+    ["Two", "tu", "too (tap round)"],
+    ["Three", "ti", "tee (tap smile)"],
+    ["Four", "fo", "foh (blow round)"],
+    ["Five", "fa", "fah (blow open)"],
+    ["Many / Much", "mulu", "moo-loo (hum to glide)"],
+    ["Few / Little", "mini", "mee-nee (nasal double smile)"],
+    ["All", "ala", "ah-lah (open to glide)"],
+    ["Some", "sama", "sah-mah (hiss to nasal)"],
+    ["None", "nunu", "noo-noo (nasal round double)"],
+    ["More", "mua", "moo-ah (hum to open)"],
+    ["Less", "lesa", "leh-sah (glide to hiss)"],
+    ["Very", "baba", "bah-bah (pop double)"],
+    ["Too", "tutu", "too-too (tap double)"],
+    ["Almost", "mosa", "moh-sah (nasal to hiss)"],
+    ["Enough", "nufa", "noo-fah (nasal to blow)"],
+    ["Maybe", "mebi", "meh-bee (nasal to pop)"],
+    ["Must", "mata", "mah-tah (nasal to tap)"],
+    ["Can", "kana", "kah-nah (throat to nasal)"],
+
+    // --- SLANG, GREETINGS & CULTURE (Patois / Hawaiian Inspired) ---
+    ["Hello / Goodbye / Peace", "alo", "ah-loh (jaw drop to tongue tap round)"],
+    ["Thank you / Grateful", "mala", "mah-lah (nasal open to glide)"],
+    ["Please / Beg", "pili", "pee-lee (lip smile to glide)"],
+    ["Sorry / Apology", "soli", "soh-lee (hiss round to glide)"],
+    ["What's up / How are you", "waga", "wah-gah (flare open to throat tap)"],
+    ["Yes man / Agreed", "yama", "yah-mah (glide open to nasal)"],
+    ["Cool / Awesome", "bobo", "boh-boh (lip pop round double)"],
+    ["Crazy / Wild", "lolo", "loh-loh (glide round double)"],
+    ["Chill / Relax", "mili", "mee-lee (nasal smile to glide)"],
+    ["Brother / Bro", "dada", "dah-dah (tongue tap open double)"],
+    ["Sister / Sis", "sisi", "see-see (hiss smile double)"],
+    ["Family / Fam", "fama", "fah-mah (blow open to nasal)"],
+    ["Wow / OMG", "wowo", "woh-woh (lip flare round double)"],
+    ["Joke / Funny", "hihi", "hee-hee (breath smile double)"],
+    ["Fake / Lie", "fifi", "fee-fee (blow smile double)"],
+    ["True / Real", "tulu", "too-loo (tongue tap round to glide round)"],
+    ["Stupid / Dumb", "dodo", "doh-doh (tongue tap round double)"],
+    ["Smart / Genius", "koko", "koh-koh (throat tap round double)"],
+    
+    // --- EVERYDAY LIFE & BODY ---
+    ["House / Home", "hale", "hah-leh (breath open to tongue tap)"],
+    ["Clothes / Wear", "kapa", "kah-pah (throat open to lip pop)"],
+    ["Phone / Device", "pono", "poh-noh (lip pop round to nasal round)"],
+    ["Head", "kapu", "kah-poo (throat open to blow round)"],
+    ["Face / Eyes", "maka", "mah-kah (nasal open to throat open)"],
+    ["Mouth", "waha", "wah-hah (flare open to breath open)"],
+    ["Ear", "pepe", "peh-peh (lip pop double)"],
+    ["Nose", "ihu", "ee-hoo (smile to breath round)"],
+    ["Foot / Leg", "pede", "peh-deh (lip pop to tongue tap)"],
+    
+    // --- NATURE & WORLD ---
+    ["Sky / Heaven", "lani", "lah-nee (glide open to nasal smile)"],
+    ["Moon", "muna", "moo-nah (hum round to nasal open)"],
+    ["Star", "sita", "see-tah (hiss smile to tongue tap)"],
+    ["Rain", "pulu", "poo-loo (blow round to glide round)"],
+    ["Danger / Warning", "hala", "hah-lah (breath open to glide open)"],
+    ["Strong / Power", "mana", "mah-nah (nasal open double)"],
+    ["Secret / Hidden", "huna", "hoo-nah (breath round to nasal open)"],
+    
+    // --- ACTIONS & DESCRIPTORS ---
+    ["Hurry / Fast", "wiki", "wee-kee (lip flare smile to throat tap)"],
+    ["Work / Hustle", "hana", "hah-nah (breath open to nasal open)"],
+    ["Poor / Broke", "boko", "boh-koh (lip pop round to throat tap)"],
+    ["Party / Dance", "hula", "hoo-lah (breath round to glide open)"],
+    ["Tasty / Delicious", "ono", "oh-noh (lip round to nasal round)"],
+    ["Tired / Exhausted", "dede", "deh-deh (tongue tap double)"],
+
+    // --- Miscellaneous ---
+    ["Check / Examine", "sanO", "sah-noh (hiss open to nasal round)"], 
+    ["Yo / Hey", "jo", "yo (glide to lip round)"],
+    ["Tomorrow", "nude", "noo-deh (nasal round to tongue tap)"],
+    ["Yesterday", "pade", "pah-deh (lip pop to tongue tap)"],
+    ["Sunlight / Sunshine", "hatasa", "hah-tah-sah (breath tap to hiss open)"],
+    ["Where", "kape", "kah-peh (throat open to lip pop)"],
+    ["When", "kata", "kah-tah (throat open to tongue tap)"],
+    ["Who", "kai", "kah-ee (throat open to glide smile)"],
+    ["Really? / Is it true?", "tuluka", "too-loo-kah (tap round to glide round to throat)"]
+];
+
+let dbData = [];
+let selectedIndex = -1;
+
+// --- DATA MANAGEMENT ---
+function loadData() {
+    const saved = localStorage.getItem("woobi_db");
+    if (saved) {
+        dbData = JSON.parse(saved);
+    } else {
+        // First load, populate from default array
+        dbData = DEFAULT_WOOBI_DB.map(item => ({ english: item[0], woobi: item[1], pronunciation: item[2] }));
+        saveData();
+    }
+    renderTable();
+}
+
+function saveData() {
+    localStorage.setItem("woobi_db", JSON.stringify(dbData));
+}
+
+// --- UI UPDATES ---
+function renderTable(searchTerm = "") {
+    const tbody = document.getElementById("dictBody");
+    tbody.innerHTML = "";
+    selectedIndex = -1; // reset selection
+
+    const term = searchTerm.toLowerCase();
+
+    dbData.forEach((item, index) => {
+        if (item.english.toLowerCase().includes(term) || item.woobi.toLowerCase().includes(term)) {
+            const tr = document.createElement("tr");
+            tr.onclick = () => selectRow(tr, index);
+            
+            tr.innerHTML = `
+                <td>${item.english}</td>
+                <td>${item.woobi}</td>
+                <td>${item.pronunciation}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+function selectRow(rowElement, index) {
+    // Remove selected class from all
+    const rows = document.querySelectorAll("#dictBody tr");
+    rows.forEach(r => r.classList.remove("selected"));
+    
+    // Add to clicked
+    rowElement.classList.add("selected");
+    selectedIndex = index;
+}
+
+function onSearch() {
+    const term = document.getElementById("searchInput").value;
+    renderTable(term);
+}
+
+function addWord() {
+    const eng = document.getElementById("engInput").value.trim();
+    const woo = document.getElementById("wooInput").value.trim();
+    const pron = document.getElementById("pronInput").value.trim();
+
+    if (eng && woo) {
+        // Insert at beginning to match Python behavior
+        dbData.unshift({ english: eng, woobi: woo, pronunciation: pron });
+        saveData();
+        
+        // Clear inputs and search
+        document.getElementById("engInput").value = "";
+        document.getElementById("wooInput").value = "";
+        document.getElementById("pronInput").value = "";
+        document.getElementById("searchInput").value = "";
+        
+        renderTable();
+    } else {
+        alert("Please provide at least the English word and Woobi sound.");
+    }
+}
+
+function deleteWord() {
+    if (selectedIndex === -1) {
+        alert("Please click on a word in the table to select it for deletion.");
+        return;
+    }
+
+    if (confirm("Delete selected word?")) {
+        dbData.splice(selectedIndex, 1);
+        saveData();
+        renderTable(document.getElementById("searchInput").value);
+    }
+}
+
+// --- TRANSLATION ENGINE LOGIC ---
+function getLookupDict() {
+    let lookup = {};
+    dbData.forEach(item => {
+        let englishWords = item.english.toLowerCase().split("/");
+        englishWords.forEach(w => {
+            lookup[w.trim()] = item.woobi.trim();
+        });
+    });
+    return lookup;
+}
+
+function woobify(word) {
+    let w = word.toLowerCase();
+    const replacements = {
+        "th":"t", "sh":"s", "ch":"s", "ph":"p", "ck":"k", 
+        "r":"w", "l":"w", "v":"b", "f":"p", "z":"s", "c":"k", "j":"d"
+    };
+    
+    // Replace consonant clusters
+    for (const [oldChar, newChar] of Object.entries(replacements)) {
+        w = w.split(oldChar).join(newChar);
+    }
+    
+    // Remove consecutive duplicate letters
+    w = w.replace(/(.)\1+/g, '$1');
+    
+    // Force CV ending
+    if (!"aeioumn".includes(w.slice(-1))) {
+        w += "a";
+    }
+    
+    // Capitalize first letter
+    return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
+function handleEnter(e) {
+    if (e.key === 'Enter') {
+        translateSentence();
+    }
+}
+
+function translateSentence() {
+    const rawSentence = document.getElementById("sentenceInput").value.trim();
+    if (!rawSentence) return;
+
+    // Strip punctuation and split
+    const cleanSentence = rawSentence.replace(/[^\w\s]/g, '').toLowerCase();
+    const words = cleanSentence.split(/\s+/);
+    const lookup = getLookupDict();
+
+    let outputHTML = "";
+
+    words.forEach(word => {
+        if (lookup[word]) {
+            outputHTML += lookup[word] + " ";
+        } else if (word.endsWith('s') && lookup[word.slice(0, -1)]) {
+            // Plural rule
+            outputHTML += lookup[word.slice(0, -1)] + " te ";
+        } else if (word.endsWith('ed') && lookup[word.slice(0, -2)]) {
+            // Past tense rule
+            outputHTML += "pa " + lookup[word.slice(0, -2)] + " ";
+        } else {
+            // Unknown word rule (attached bracket, NO space before it)
+            let woobified = woobify(word);
+            outputHTML += woobified + `<span class="red-bracket">[${word}]</span> `;
+        }
+    });
+
+    document.getElementById("outputBox").innerHTML = outputHTML;
+}
+
+// Initialize app on load
+window.onload = loadData;
+
+</script>
+</body>
+</html>
