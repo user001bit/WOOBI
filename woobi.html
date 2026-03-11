@@ -3,580 +3,1339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Woobi OS: Lexicon & Translation Engine</title>
+    <title>Woobi OS — Lexicon & Translation Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Helvetica', Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+        :root {
+            --bg:           #0e0b09;
+            --surface:      #1b1712;
+            --surface2:     #231e16;
+            --border:       #3a3128;
+            --text:         #f0e4d0;
+            --text-muted:   #8a7b6a;
+            --accent:       #d4933f;
+            --accent-glow:  rgba(212,147,63,0.13);
+            --woobi:        #f5c464;
+            --woobi-dim:    rgba(245,196,100,0.07);
+            --unknown:      #e06868;
+            --marker:       #a78be0;
+            --marker-bg:    rgba(167,139,224,0.1);
+            --success:      #6ab896;
         }
-        h1, h2 {
-            text-align: center;
-            color: #222;
-        }
-        .container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .input-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .input-group label {
-            font-weight: bold;
-            font-size: 14px;
-        }
-        input[type="text"] {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            flex-grow: 1;
-        }
-        button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-            transition: background 0.3s;
-        }
-        .btn-add { background-color: #4CAF50; }
-        .btn-add:hover { background-color: #45a049; }
-        .btn-delete { background-color: #f44336; }
-        .btn-delete:hover { background-color: #da190b; }
-        .btn-translate { background-color: #2196F3; }
-        .btn-translate:hover { background-color: #0b7dda; }
 
-        .table-container {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 15px;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            font-weight: 400;
         }
-        table {
+
+        /* ── HEADER ─────────────────────────────────────────── */
+        .site-header {
+            padding: 24px 40px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, #201a12 0%, var(--bg) 100%);
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .site-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--woobi);
+            letter-spacing: -0.01em;
+            line-height: 1;
+        }
+        .site-header .subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        /* ── PHONOLOGY BAR ───────────────────────────────────── */
+        .phono-bar {
+            padding: 10px 40px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 6px 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+        .phono-bar .ph-label {
+            color: var(--text-muted);
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+        }
+        .phono-bar .ph-val {
+            font-family: 'DM Mono', monospace;
+            color: var(--woobi);
+            font-size: 0.82rem;
+            letter-spacing: 0.06em;
+        }
+        .phono-bar .ph-val.banned {
+            color: var(--unknown);
+            text-decoration: line-through;
+            text-decoration-color: rgba(224,104,104,0.5);
+        }
+        .phono-sep { color: var(--border); }
+
+        /* ── MAIN GRID ───────────────────────────────────────── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 32px 40px 60px;
+        }
+
+        /* ── PANEL CARD ──────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.92rem;
+            font-weight: 400;
+            font-style: italic;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+        .badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: var(--accent-glow);
+            border: 1px solid rgba(212,147,63,0.28);
+            padding: 2px 9px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── DICTIONARY ──────────────────────────────────────── */
+        .search-wrap {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .search-input {
             width: 100%;
-            border-collapse: collapse;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 8px 10px 8px 32px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.87rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a7b6a' stroke-width='2.2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 10px center;
         }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+        .search-input:focus { border-color: var(--accent); }
+        .search-input::placeholder { color: var(--text-muted); }
+
+        .dict-scroll {
+            overflow-y: auto;
+            flex: 1;
+            max-height: 540px;
         }
-        th {
-            background-color: #f2f2f2;
+        .dict-scroll::-webkit-scrollbar { width: 4px; }
+        .dict-scroll::-webkit-scrollbar-track { background: transparent; }
+        .dict-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: var(--surface2);
+            padding: 9px 14px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            font-weight: 500;
             position: sticky;
             top: 0;
-            z-index: 1;
+            z-index: 2;
+            border-bottom: 1px solid var(--border);
         }
-        tr { cursor: pointer; }
-        tr:hover { background-color: #f9f9f9; }
-        tr.selected { background-color: #d1e7dd; }
+        tbody tr { border-bottom: 1px solid rgba(58,49,40,0.5); transition: background 0.13s; }
+        tbody tr:hover { background: var(--woobi-dim); }
+        tbody td { padding: 8px 14px; font-size: 0.84rem; }
+        tbody td:nth-child(1) { color: var(--text); }
+        tbody td:nth-child(2) {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--woobi);
+            font-weight: 500;
+        }
+        tbody td:nth-child(3) {
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-style: italic;
+        }
 
-        .output-box {
-            width: 100%;
-            min-height: 80px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #fafafa;
-            font-size: 16px;
-            box-sizing: border-box;
-            white-space: pre-wrap;
+        /* ── TRANSLATOR ──────────────────────────────────────── */
+        .translate-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
         }
-        .red-bracket { color: red; }
+        .field-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .translate-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.98rem;
+            line-height: 1.55;
+            outline: none;
+            resize: none;
+            min-height: 86px;
+            transition: border-color 0.2s;
+        }
+        .translate-input:focus { border-color: var(--accent); }
+        .translate-input::placeholder { color: var(--text-muted); }
+
+        .translate-btn {
+            background: var(--accent);
+            color: #0e0b09;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .translate-btn:hover { background: #e8a550; }
+        .translate-btn:active { transform: scale(0.98); }
+        .translate-btn svg { flex-shrink: 0; }
+
+        /* ── OUTPUT ──────────────────────────────────────────── */
+        .output-wrap {
+            border-top: 1px solid var(--border);
+            padding: 18px 20px 20px;
+            background: rgba(245,196,100,0.025);
+        }
+        .output-text {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.18rem;
+            color: var(--woobi);
+            line-height: 1.9;
+            letter-spacing: 0.04em;
+            min-height: 44px;
+            word-break: break-word;
+        }
+        .output-empty {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .woobi-word { display: inline; }
+        .unknown-tag {
+            font-size: 0.72em;
+            color: var(--unknown);
+            vertical-align: super;
+            margin-left: 1px;
+            opacity: 0.88;
+            font-style: italic;
+        }
+        .marker-word {
+            color: var(--marker);
+        }
+
+        .grammar-hints {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 0;
+        }
+        .hint-chip {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: var(--marker-bg);
+            color: var(--marker);
+            border: 1px solid rgba(167,139,224,0.22);
+            letter-spacing: 0.03em;
+        }
+
+        /* ── LEGEND ──────────────────────────────────────────── */
+        .legend-row {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 0 40px 36px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+        .legend-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+        .legend-swatch.woobi { background: var(--woobi); }
+        .legend-swatch.unknown { background: var(--unknown); }
+        .legend-swatch.marker { background: var(--marker); }
+
+        /* ── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 820px) {
+            .site-header { padding: 18px 20px; gap: 8px; }
+            .phono-bar { padding: 8px 20px; }
+            .main-grid { grid-template-columns: 1fr; padding: 20px 20px 48px; gap: 20px; }
+            .dict-scroll { max-height: 380px; }
+            .legend-row { padding: 0 20px 32px; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Woobi Core Engine</h1>
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="site-header">
+    <h1>Woobi OS</h1>
+    <span class="subtitle">Lexicon &amp; Translation Engine · v2</span>
+</header>
 
-    <div class="container">
-        <div class="input-group">
-            <label>English Word:</label>
-            <input type="text" id="engInput" placeholder="e.g. Hello">
-            <label>Woobi:</label>
-            <input type="text" id="wooInput" placeholder="e.g. alo">
-            <label>Pronunciation:</label>
-            <input type="text" id="pronInput" placeholder="e.g. ah-loh">
-            <button class="btn-add" onclick="addWord()">Add</button>
-            <button class="btn-delete" onclick="deleteWord()">Delete Selected</button>
+<!-- ── PHONOLOGY BAR ───────────────────────────────────────── -->
+<div class="phono-bar">
+    <span class="ph-label">Consonants</span>
+    <span class="ph-val">p · b · t · d · k · g · m · n · h · w · l · s</span>
+    <span class="phono-sep">│</span>
+    <span class="ph-label">Vowels</span>
+    <span class="ph-val">ə · a · i · u · e · o</span>
+    <span class="phono-sep">│</span>
+    <span class="ph-label">Structure</span>
+    <span class="ph-val">CV · V · ends in vowel or m/n</span>
+    <span class="phono-sep">│</span>
+    <span class="ph-label">Banned</span>
+    <span class="ph-val banned">r · z · v · th · sh · ch</span>
+</div>
+
+<!-- ── MAIN GRID ────────────────────────────────────────────── -->
+<div class="main-grid">
+
+    <!-- DICTIONARY PANEL -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Lexicon</span>
+            <span class="badge" id="wordCount">— entries</span>
         </div>
-
-        <div class="input-group">
-            <label>Search Dictionary:</label>
-            <input type="text" id="searchInput" placeholder="Search..." oninput="onSearch()">
+        <div class="search-wrap">
+            <input
+                class="search-input"
+                type="text"
+                id="searchInput"
+                placeholder="Search English or Woobi…"
+                oninput="onSearch()"
+            >
         </div>
-
-        <div class="table-container">
-            <table id="dictTable">
+        <div class="dict-scroll">
+            <table>
                 <thead>
                     <tr>
-                        <th>English Concept</th>
-                        <th>Woobi Word</th>
+                        <th>English</th>
+                        <th>Woobi</th>
                         <th>Pronunciation</th>
                     </tr>
                 </thead>
-                <tbody id="dictBody">
-                    </tbody>
+                <tbody id="dictBody"></tbody>
             </table>
         </div>
     </div>
 
-    <div class="container">
-        <h2>Woobi Sentence Translator</h2>
-        <div class="input-group">
-            <label>English Sentence:</label>
-            <input type="text" id="sentenceInput" placeholder="Type sentence here..." onkeypress="handleEnter(event)">
-            <button class="btn-translate" onclick="translateSentence()">Translate</button>
+    <!-- TRANSLATOR PANEL -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Translator</span>
+            <span class="badge">EN → Woobi</span>
         </div>
-        <div id="outputBox" class="output-box"></div>
+        <div class="translate-body">
+            <div>
+                <div class="field-label">English Input</div>
+                <textarea
+                    class="translate-input"
+                    id="sentenceInput"
+                    placeholder="Type a sentence… ending ? adds ka · ending ! adds ne"
+                    onkeydown="handleKey(event)"
+                ></textarea>
+            </div>
+            <button class="translate-btn" onclick="translateSentence()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Translate
+            </button>
+        </div>
+        <div class="output-wrap">
+            <div class="field-label">Woobi Output</div>
+            <div class="output-text" id="outputBox">
+                <span class="output-empty">Translation will appear here…</span>
+            </div>
+            <div class="grammar-hints" id="grammarHints"></div>
+        </div>
     </div>
 
+</div>
+
+<!-- ── LEGEND ───────────────────────────────────────────────── -->
+<div class="legend-row">
+    <div class="legend-item"><span class="legend-swatch woobi"></span> Woobi word (known)</div>
+    <div class="legend-item"><span class="legend-swatch unknown"></span> <code>[word]</code> = woobified loanword (unknown in dict)</div>
+    <div class="legend-item"><span class="legend-swatch marker"></span> Grammar particle (ka / ne / pa / te)</div>
+</div>
+
+<!-- ────────────────────────────────────────────────────────── -->
 <script>
-// --- THE DEFAULT DATABASE (200+ Words) ---
-const DEFAULT_WOOBI_DB = [
-    // --- ORIGINAL 100 (Single Syllable & Core Markers) ---
-    ["I / Me", "ə", "uh (neutral relaxed)"],
-    ["You", "a", "ah (jaw drop)"],
-    ["He / She", "i", "ee (slight smile)"],
-    ["It / That / The", "hə", "huh (breath)"],
-    ["We", "mi", "mee (lips to smile)"],
-    ["They / All", "dE", "deh (tongue tap)"],
-    ["This", "ha", "hah (breath open)"],
-    ["Plural Marker", "te", "teh (soft t)"],
-    ["Past Marker", "pa", "pah (lip pop)"],
-    ["Future Marker", "nu", "noo (lip round)"],
-    ["Question Marker", "ka", "kah (soft k)"],
-    ["Yes", "mə", "muh (lip hum)"],
-    ["No / Not", "na", "nah (nasal open)"],
-    ["And", "n", "nn (tongue resting)"],
-    ["But", "bə", "buh (soft b)"],
-    ["To / For", "tə", "tuh (tongue tap)"],
-    ["In / Inside", "ni", "nee (nasal smile)"],
-    ["On / Above", "na", "nah (nasal open)"],
-    ["With", "wi", "wee (lip flare)"],
-    ["Is / Am / Are", "m", "mm (closed hum)"],
-    ["Have / Own", "ha", "hah (breath)"],
-    ["Do / Make", "wa", "wah (lips opening)"],
-    ["Go / Move", "wə", "wuh (lazy w)"],
-    ["Come", "kə", "kuh (soft throat tap)"],
-    ["Say / Speak", "sə", "suh (soft hiss)"],
-    ["See / Look", "sa", "sah (hiss to open)"],
-    ["Take / Get", "ta", "tah (tongue tap)"],
-    ["Good", "ba", "bah (lip pop open)"],
-    ["Bad", "bO", "boh (lip pop round)"],
-    ["Big / Large", "la", "lah (tongue tap open)"],
-    ["Small / Little", "mO", "moh (nasal round)"],
-    ["Time", "ta", "tah (tongue tap)"],
-    ["Person / Man", "ma", "mah (nasal open)"],
-    ["Thing", "ti", "tee (tongue tap smile)"],
-    ["Way / Path", "we", "weh (lip flare)"],
-    ["Day", "de", "deh (tongue tap)"],
-    ["World", "wə", "wuh (lazy w)"],
-    ["Place", "pe", "peh (lip pop)"],
-    ["Water", "wa", "wah (lip flare open)"],
-    ["Fire", "fa", "fah (lip blow)"],
-    ["Or", "o", "oh (lip round)"],
-    ["If", "fi", "fee (lip to teeth)"],
-    ["From", "fə", "fuh (soft blow)"],
-    ["By", "bi", "bee (lips closed to open)"],
-    ["At", "ta", "tah (tongue tap open)"],
-    ["Know / Think", "nO", "noh (nasal round)"],
-    ["Give", "gi", "gee (throat to smile)"],
-    ["Want / Need", "wO", "woh (lip round)"],
-    ["Use", "ju", "yoo (tongue glide)"],
-    ["Find", "fa", "fah (soft blow open)"],
-    ["Tell", "te", "teh (tongue tap)"],
-    ["Work", "wo", "woh (lip flare)"],
-    ["Try", "ti", "tee (tongue tap smile)"],
-    ["Leave", "li", "lee (tongue curl)"],
-    ["Call", "ko", "koh (throat tap round)"],
-    ["Feel", "fi", "fee (lip blow)"],
-    ["Become", "bi", "bee (lip pop)"],
-    ["Put", "pu", "poo (lip blow out)"],
-    ["Mean", "mi", "mee (nasal smile)"],
-    ["Keep", "ki", "kee (throat tap)"],
-    ["Let", "le", "leh (tongue tap)"],
-    ["Begin", "be", "beh (lip pop)"],
-    ["Help", "he", "heh (breath)"],
-    ["Show", "So", "shoh (soft sh)"],
-    ["Hear", "hi", "hee (breath smile)"],
-    ["Play", "pe", "peh (lip pop)"],
-    ["Run", "rə", "ruh (lazy r)"],
-    ["New", "nu", "noo (nasal round)"],
-    ["Old", "O", "oh (relaxed round)"],
-    ["High / Up", "hi", "hee (breath smile)"],
-    ["Low / Down", "lo", "loh (tongue tap round)"],
-    ["Hot", "ha", "hah (breath open)"],
-    ["Cold", "ko", "koh (throat tap round)"],
-    ["Fast", "fa", "fah (lip blow open)"],
-    ["Slow", "sO", "soh (hiss round)"],
-    ["Right / True", "ri", "ree (lazy r smile)"],
-    ["Wrong / False", "rO", "roh (lazy r round)"],
-    ["Happy", "ha", "hah (breath open)"],
-    ["Sad", "sa", "sah (hiss open)"],
-    ["First", "fə", "fuh (soft blow)"],
-    ["Last", "la", "lah (tongue tap)"],
-    ["Same", "se", "seh (hiss)"],
-    ["Different", "di", "dee (tongue tap smile)"],
-    ["Important", "po", "poh (lip pop round)"],
-    ["Life", "la", "lah (tongue tap)"],
-    ["Hand", "ha", "hah (breath)"],
-    ["Part", "pa", "pah (lip pop open)"],
-    ["Child", "ca", "chah (soft ch)"],
-    ["Eye", "ai", "eye (glide)"],
-    ["Work / Job", "wo", "woh (lip flare)"],
-    ["Week", "wi", "wee (lip flare smile)"],
-    ["Group", "gu", "goo (throat tap round)"],
-    ["Problem", "po", "poh (lip pop round)"],
-    ["Fact", "fa", "fah (lip blow)"],
-    ["Idea", "ai", "eye (glide)"],
-    ["Food", "fu", "foo (lip blow round)"],
-    ["Earth / Ground", "ə", "uh (neutral)"],
-    ["Air / Wind", "he", "heh (breath)"],
-    ["Mind", "ma", "mah (nasal open)"],
+// ============================================================
+//  WOOBI DICTIONARY — v2
+//
+//  PHONOLOGICAL FIXES FROM v1:
+//  · All 'r' removed (banned sound) → replaced with 'l'
+//    - Run:  rə → lu
+//    - Right/True:  ri → si  (avoids clash with Leave=li)
+//    - Wrong/False: rO → su  (avoids clash with Low=lo, Show=so)
+//    - Right (dir): raita → laita
+//  · Capitals normalized (O→o, E→e etc.) with clash resolution:
+//    - They/All:    dE  → de   (polysemy with Day=de; context disambiguates)
+//    - Bad:         bO  → bo
+//    - Know/Think:  nO  → no
+//    - Want/Need:   wO  → wone (was 'wo', clashed with Work=wo)
+//    - Old:          O  → olo  (was 'o', clashed with Or=o)
+//    - Slow:        sO  → solo (was 'so', clashed with Show=so)
+//    - Show:        So  → so
+//    - Check:      sanO → sano
+//  · 'j' removed (not in allowed set): jo → do (Yo/Hey)
+//  · 'y' removed (not in allowed set): yama → wama (Yes man)
+//  · 'c' normalized: ca → ka (Child)
+//  · Clash resolutions:
+//    - Use:          ju  → du   (j banned)
+//    - Earth/Ground:  ə  → enu  (was I/Me)
+//    - Dark/Night: dudu → dumu  (was Down=dudu)
+//    - Empty:      huhu → hubu  (was Smoke=huhu)
+//    - Walk:       pata → waku  (was Paper/Book=pata)
+//    - Near:       nini → nena  (was Network=nini)
+//    - Soft/Liquid: mulu → musa (was Many/Much=mulu)
+//    - Too (adv):  tutu → tubi  (was Draw=tutu; Draw → tuto)
+//  · NEW words added: ne (exclamation marker), kawe (how),
+//    kati (what), How are you (full phrase match)
+// ============================================================
+const WOOBI_DB = [
+    // ── TIER 1: ULTRA-CORE ──────────────────────────────────
+    ["I / Me",              "ə",        "uh"],
+    ["You",                 "a",        "ah"],
+    ["He / She",            "i",        "ee"],
+    ["It / That / The",     "hə",       "huh"],
+    ["We",                  "mi",       "mee"],
+    ["They / Them",         "de",       "deh"],
+    ["This",                "ha",       "hah"],
+    ["Here",   "hape",  "hah-peh"],   // ha (this) + pe (place)
+    ["There",  "həpe",  "huh-peh"],   // hə (that) + pe (place)
 
-    // --- THE NEXT 100 (CVCV Minimal Combinations) ---
-    ["Fly / Drone", "pupi", "poo-pee (lip pop to smile)"],
-    ["Draw / Design", "tutu", "too-too (double tongue tap)"],
-    ["Machine / Tool", "gugu", "goo-goo (double throat tap)"],
-    ["Network / Connect", "nini", "nee-nee (double nasal smile)"],
-    ["Rest / Sleep", "mumu", "moo-moo (closed double hum)"],
-    ["Health / Energy", "bəbə", "buh-buh (lazy double pop)"],
-    ["Smoke / Fog", "huhu", "hoo-hoo (double breath round)"],
-    ["City / Town", "kuku", "koo-koo (throat tap round)"],
-    ["Money / Value", "mami", "mah-mee (open to smile nasal)"],
-    ["Paper / Book", "pata", "pah-tah (lip to tongue)"],
-    ["Learn / Study", "kipa", "kee-pah (throat to lip)"],
-    ["Music / Song", "lala", "lah-lah (tongue curl open)"],
-    ["Room / Space", "buku", "boo-koo (lip to throat)"],
-    ["Friend", "pəna", "puh-nah (lip to nasal)"],
-    ["Love", "muba", "moo-bah (hum to open pop)"],
-    ["Animal", "batu", "bah-too (pop to tap)"],
-    ["Plant / Tree", "puti", "poo-tee (blow to smile)"],
-    ["Color", "kama", "kah-mah (throat to nasal)"],
-    ["Light / Sun", "hata", "hah-tah (breath to tap)"],
-    ["Dark / Night", "dudu", "doo-doo (tongue tap round)"],
-    ["Hard / Solid", "taka", "tah-kah (tap to throat)"],
-    ["Soft / Liquid", "mulu", "moo-loo (hum to glide)"],
-    ["Clean", "pipi", "pee-pee (lip smile)"],
-    ["Dirty", "gaba", "gah-bah (throat to lip)"],
-    ["Full", "bubu", "boo-boo (lip round)"],
-    ["Empty", "huhu", "hoo-hoo (breath round)"],
-    ["Heavy", "daba", "dah-bah (tap to pop)"],
-    ["Lightweight", "puhu", "poo-hoo (blow to breath)"],
-    ["Open", "paba", "pah-bah (lip double open)"],
-    ["Closed", "tuku", "too-koo (tap to throat)"],
-    ["Start", "bigi", "bee-gee (pop to throat)"],
-    ["Stop", "putu", "poo-too (blow to tap)"],
-    ["Win", "wawa", "wah-wah (lip flare double)"],
-    ["Lose", "nana", "nah-nah (nasal open)"],
-    ["Buy", "gipa", "gee-pah (throat to lip)"],
-    ["Sell", "pagi", "pah-gee (lip to throat)"],
-    ["Build / Create", "kutu", "koo-too (throat to tap)"],
-    ["Break / Destroy", "kaka", "kah-kah (throat open)"],
-    ["Wait", "titi", "tee-tee (tap smile)"],
-    ["Move", "wuwu", "woo-woo (lip round double)"],
-    ["Read", "nipa", "nee-pah (nasal to lip)"],
-    ["Write", "tipa", "tee-pah (tap to lip)"],
-    ["Eat", "məmu", "muh-moo (lazy hum)"],
-    ["Drink", "wata", "wah-tah (flare to tap)"],
-    ["Walk", "pata", "pah-tah (lip to tap)"],
-    ["Talk / Converse", "susu", "soo-soo (hiss round)"],
-    ["Listen", "hini", "hee-nee (breath to nasal)"],
-    ["Watch / Stare", "sasa", "sah-sah (hiss open)"],
-    ["Understand", "nəna", "nuh-nah (lazy nasal)"],
-    ["Remember", "mimi", "mee-mee (nasal smile)"],
-    ["Forget", "fufu", "foo-foo (soft blow double)"],
-    ["Question", "kaku", "kah-koo (throat to round)"],
-    ["Answer", "tada", "tah-dah (tap open double)"],
-    ["Reason / Why", "hawa", "hah-wah (breath to flare)"],
-    ["Because", "bika", "bee-kah (pop to throat)"],
-    ["Always", "tawa", "tah-wah (tap to flare)"],
-    ["Never", "nawa", "nah-wah (nasal to flare)"],
-    ["Sometimes", "tama", "tah-mah (tap to nasal)"],
-    ["Soon", "nuta", "noo-tah (nasal to tap)"],
-    ["Later", "latə", "lah-tuh (glide to lazy)"],
-    ["Early", "fata", "fah-tah (blow to tap)"],
-    ["Late", "tula", "too-lah (tap to glide)"],
-    ["Near", "nini", "nee-nee (nasal smile)"],
-    ["Far", "fafa", "fah-fah (blow open double)"],
-    ["Up", "pupu", "poo-poo (blow round)"],
-    ["Down", "dudu", "doo-doo (tap round)"],
-    ["Left", "lefa", "leh-fah (glide to blow)"],
-    ["Right", "raita", "rye-tah (glide to tap)"],
-    ["Front", "fana", "fah-nah (blow to nasal)"],
-    ["Back", "baka", "bah-kah (pop to throat)"],
-    ["Side", "sida", "see-dah (hiss to tap)"],
-    ["Center", "mida", "mee-dah (nasal to tap)"],
-    ["Top", "tapa", "tah-pah (tap to pop)"],
-    ["Bottom", "bata", "bah-tah (pop to tap)"],
-    ["Inside", "nisa", "nee-sah (nasal to hiss)"],
-    ["Outside", "sauta", "sow-tah (hiss to tap)"],
-    ["Shape", "sapa", "sah-pah (hiss to pop)"],
-    ["Line", "lana", "lah-nah (glide to nasal)"],
-    ["Circle", "lulu", "loo-loo (glide round double)"],
-    ["Square", "kaba", "kah-bah (throat to pop)"],
-    ["Number", "nuba", "noo-bah (nasal to pop)"],
-    ["One", "wa", "wah (flare open)"],
-    ["Two", "tu", "too (tap round)"],
-    ["Three", "ti", "tee (tap smile)"],
-    ["Four", "fo", "foh (blow round)"],
-    ["Five", "fa", "fah (blow open)"],
-    ["Many / Much", "mulu", "moo-loo (hum to glide)"],
-    ["Few / Little", "mini", "mee-nee (nasal double smile)"],
-    ["All", "ala", "ah-lah (open to glide)"],
-    ["Some", "sama", "sah-mah (hiss to nasal)"],
-    ["None", "nunu", "noo-noo (nasal round double)"],
-    ["More", "mua", "moo-ah (hum to open)"],
-    ["Less", "lesa", "leh-sah (glide to hiss)"],
-    ["Very", "baba", "bah-bah (pop double)"],
-    ["Too", "tutu", "too-too (tap double)"],
-    ["Almost", "mosa", "moh-sah (nasal to hiss)"],
-    ["Enough", "nufa", "noo-fah (nasal to blow)"],
-    ["Maybe", "mebi", "meh-bee (nasal to pop)"],
-    ["Must", "mata", "mah-tah (nasal to tap)"],
-    ["Can", "kana", "kah-nah (throat to nasal)"],
+    // ── GRAMMAR PARTICLES ───────────────────────────────────
+    ["Plural Marker",       "te",       "teh"],
+    ["Past Marker",         "pa",       "pah"],
+    ["Future Marker",       "nu",       "noo"],
+    ["Question Marker",     "ka",       "kah"],
+    ["Exclamation Marker",  "ne",       "neh"],
 
-    // --- SLANG, GREETINGS & CULTURE (Patois / Hawaiian Inspired) ---
-    ["Hello / Goodbye / Peace", "alo", "ah-loh (jaw drop to tongue tap round)"],
-    ["Thank you / Grateful", "mala", "mah-lah (nasal open to glide)"],
-    ["Please / Beg", "pili", "pee-lee (lip smile to glide)"],
-    ["Sorry / Apology", "soli", "soh-lee (hiss round to glide)"],
-    ["What's up / How are you", "waga", "wah-gah (flare open to throat tap)"],
-    ["Yes man / Agreed", "yama", "yah-mah (glide open to nasal)"],
-    ["Cool / Awesome", "bobo", "boh-boh (lip pop round double)"],
-    ["Crazy / Wild", "lolo", "loh-loh (glide round double)"],
-    ["Chill / Relax", "mili", "mee-lee (nasal smile to glide)"],
-    ["Brother / Bro", "dada", "dah-dah (tongue tap open double)"],
-    ["Sister / Sis", "sisi", "see-see (hiss smile double)"],
-    ["Family / Fam", "fama", "fah-mah (blow open to nasal)"],
-    ["Wow / OMG", "wowo", "woh-woh (lip flare round double)"],
-    ["Joke / Funny", "hihi", "hee-hee (breath smile double)"],
-    ["Fake / Lie", "fifi", "fee-fee (blow smile double)"],
-    ["True / Real", "tulu", "too-loo (tongue tap round to glide round)"],
-    ["Stupid / Dumb", "dodo", "doh-doh (tongue tap round double)"],
-    ["Smart / Genius", "koko", "koh-koh (throat tap round double)"],
-    
-    // --- EVERYDAY LIFE & BODY ---
-    ["House / Home", "hale", "hah-leh (breath open to tongue tap)"],
-    ["Clothes / Wear", "kapa", "kah-pah (throat open to lip pop)"],
-    ["Phone / Device", "pono", "poh-noh (lip pop round to nasal round)"],
-    ["Head", "kapu", "kah-poo (throat open to blow round)"],
-    ["Face / Eyes", "maka", "mah-kah (nasal open to throat open)"],
-    ["Mouth", "waha", "wah-hah (flare open to breath open)"],
-    ["Ear", "pepe", "peh-peh (lip pop double)"],
-    ["Nose", "ihu", "ee-hoo (smile to breath round)"],
-    ["Foot / Leg", "pede", "peh-deh (lip pop to tongue tap)"],
-    
-    // --- NATURE & WORLD ---
-    ["Sky / Heaven", "lani", "lah-nee (glide open to nasal smile)"],
-    ["Moon", "muna", "moo-nah (hum round to nasal open)"],
-    ["Star", "sita", "see-tah (hiss smile to tongue tap)"],
-    ["Rain", "pulu", "poo-loo (blow round to glide round)"],
-    ["Danger / Warning", "hala", "hah-lah (breath open to glide open)"],
-    ["Strong / Power", "mana", "mah-nah (nasal open double)"],
-    ["Secret / Hidden", "huna", "hoo-nah (breath round to nasal open)"],
-    
-    // --- ACTIONS & DESCRIPTORS ---
-    ["Hurry / Fast", "wiki", "wee-kee (lip flare smile to throat tap)"],
-    ["Work / Hustle", "hana", "hah-nah (breath open to nasal open)"],
-    ["Poor / Broke", "boko", "boh-koh (lip pop round to throat tap)"],
-    ["Party / Dance", "hula", "hoo-lah (breath round to glide open)"],
-    ["Tasty / Delicious", "ono", "oh-noh (lip round to nasal round)"],
-    ["Tired / Exhausted", "dede", "deh-deh (tongue tap double)"],
+    // ── CORE FUNCTION WORDS ─────────────────────────────────
+    ["Yes",                 "mə",       "muh"],
+    ["No / Not",            "na",       "nah"],
+    ["And",                 "n",        "n"],
+    ["But",                 "bə",       "buh"],
+    ["To / For",            "tə",       "tuh"],
+    ["In / Inside",         "ni",       "nee"],
+    ["On / Above",          "na",       "nah"],
+    ["With",                "wi",       "wee"],
+    ["Is / Am / Are",       "m",        "mm"],
+    ["Or",                  "o",        "oh"],
+    ["If",                  "fi",       "fee"],
+    ["From",                "fə",       "fuh"],
+    ["By",                  "bi",       "bee"],
+    ["At",                  "ta",       "tah"],
+    ["Also / Too",          "ni",       "nee"],
+    ["So / Therefore",      "se",       "seh"],
+    ["Then / Next",         "ta",       "tah"],
+    ["Although / Even if",  "boku",     "boh-koo"],
+    ["Only / Just",         "solo",     "soh-loh"],
+    ["Already",             "pano",     "pah-noh"],
+    ["Not yet",             "nanu",     "nah-noo"],
+    ["Again / Repeat",      "bali",     "bah-lee"],
+    ["Together",            "kotami",   "koh-tah-mee"],
+    ["Each / Every",        "tawa",     "tah-wah"],
+    ["Both",                "tubo",     "too-boh"],
+    ["Either",              "taono",    "tah-oh-noh"],
 
-    // --- Miscellaneous ---
-    ["Check / Examine", "sanO", "sah-noh (hiss open to nasal round)"], 
-    ["Yo / Hey", "jo", "yo (glide to lip round)"],
-    ["Tomorrow", "nude", "noo-deh (nasal round to tongue tap)"],
-    ["Yesterday", "pade", "pah-deh (lip pop to tongue tap)"],
-    ["Sunlight / Sunshine", "hatasa", "hah-tah-sah (breath tap to hiss open)"],
-    ["Where", "kape", "kah-peh (throat open to lip pop)"],
-    ["When", "kata", "kah-tah (throat open to tongue tap)"],
-    ["Who", "kai", "kah-ee (throat open to glide smile)"],
-    ["Really? / Is it true?", "tuluka", "too-loo-kah (tap round to glide round to throat)"]
+    // ── CORE VERBS (highest-frequency, single syllable) ─────
+    ["Have / Own",          "ha",       "hah"],
+    ["Do / Make",           "wa",       "wah"],
+    ["Go / Move",           "wə",       "wuh"],
+    ["Come",                "kə",       "kuh"],
+    ["Say / Speak",         "sə",       "suh"],
+    ["See / Look",          "sa",       "sah"],
+    ["Take / Get",          "ta",       "tah"],
+    ["Know / Think",        "no",       "noh"],
+    ["Give",                "gi",       "gee"],
+    ["Want / Need",         "wone",     "woh-neh"],
+    ["Use",                 "du",       "doo"],
+    ["Find",                "fa",       "fah"],
+    ["Tell",                "te",       "teh"],
+    ["Work",                "wo",       "woh"],
+    ["Try",                 "ti",       "tee"],
+    ["Leave",               "li",       "lee"],
+    ["Call",                "ko",       "koh"],
+    ["Feel",                "fi",       "fee"],
+    ["Become",              "bi",       "bee"],
+    ["Put",                 "pu",       "poo"],
+    ["Mean",                "mi",       "mee"],
+    ["Keep",                "ki",       "kee"],
+    ["Let",                 "le",       "leh"],
+    ["Begin",               "be",       "beh"],
+    ["Help",                "he",       "heh"],
+    ["Show",                "so",       "soh"],
+    ["Hear",                "hi",       "hee"],
+    ["Play",                "pe",       "peh"],
+    ["Run",                 "lu",       "loo"],
+
+    // ── CORE ADJECTIVES ─────────────────────────────────────
+    ["Good",                "ba",       "bah"],
+    ["Bad",                 "bo",       "boh"],
+    ["Big / Large",         "la",       "lah"],
+    ["Small / Little",      "mo",       "moh"],
+    ["New",                 "nu",       "noo"],
+    ["Old",                 "olo",      "oh-loh"],
+    ["High / Up",           "hi",       "hee"],
+    ["Low / Down",          "lo",       "loh"],
+    ["Hot",                 "ha",       "hah"],
+    ["Cold",                "ko",       "koh"],
+    ["Fast",                "fa",       "fah"],
+    ["Slow",                "solo",     "soh-loh"],
+    ["Right / True",        "si",       "see"],
+    ["Wrong / False",       "su",       "soo"],
+    ["Happy",               "ha",       "hah"],
+    ["Sad",                 "sa",       "sah"],
+    ["Same",                "se",       "seh"],
+    ["Different",           "di",       "dee"],
+    ["Important",           "po",       "poh"],
+    ["Tall",                "lanu",     "lah-noo"],
+    ["Short (height)",      "mono",     "moh-noh"],
+    ["Fat / Big body",      "buno",     "boo-noh"],
+    ["Thin / Slim",         "simu",     "see-moo"],
+    ["Loud",                "sobu",     "soh-boo"],
+    ["Quiet",               "holu",     "hoh-loo"],
+    ["Beautiful / Pretty",  "nami",     "nah-mee"],
+    ["Ugly",                "godo",     "goh-doh"],
+    ["Wet",                 "wetu",     "weh-too"],
+    ["Dry",                 "mako",     "mah-koh"],
+    ["Rich / Wealthy",      "mulo",     "moo-loh"],
+    ["Poor / Broke",        "boko",     "boh-koh"],
+    ["Sacred / Holy",       "kapono",   "kah-poh-noh"],
+    ["Raw / Uncooked",      "kibo",     "kee-boh"],
+    ["Tasty / Delicious",   "ono",      "oh-noh"],
+    ["Spicy / Hot (food)",  "piwa",     "pee-wah"],
+    ["Sweet",               "meli",     "meh-lee"],
+    ["Bitter",              "kosi",     "koh-see"],
+    ["Sour",                "deki",     "deh-kee"],
+
+    // ── CORE NOUNS ──────────────────────────────────────────
+    ["Time",                "ta",       "tah"],
+    ["Person / Man",        "ma",       "mah"],
+    ["Thing",               "ti",       "tee"],
+    ["Way / Path",          "we",       "weh"],
+    ["Day",                 "de",       "deh"],
+    ["World",               "wə",       "wuh"],
+    ["Place",               "pe",       "peh"],
+    ["Water",               "wa",       "wah"],
+    ["Fire",                "fa",       "fah"],
+    ["Life",                "la",       "lah"],
+    ["Hand",                "ha",       "hah"],
+    ["Part",                "pa",       "pah"],
+    ["Child",               "ka",       "kah"],
+    ["Eye",                 "ai",       "eye"],
+    ["Work / Job",          "wo",       "woh"],
+    ["Week",                "wi",       "wee"],
+    ["Group",               "gu",       "goo"],
+    ["Problem",             "po",       "poh"],
+    ["Fact",                "fa",       "fah"],
+    ["Idea",                "ai",       "eye"],
+    ["Food",                "fu",       "foo"],
+    ["Earth / Ground",      "enu",      "eh-noo"],
+    ["Air / Wind",          "he",       "heh"],
+    ["Mind",                "ma",       "mah"],
+    ["Dog",                 "da",       "dah"],
+    ["Now",                 "no",       "noh"],
+
+    // ── EXTENDED VOCABULARY (CVCV) ───────────────────────────
+    ["Fly / Drone",         "pupi",     "poo-pee"],
+    ["Draw / Design",       "tuto",     "too-toh"],
+    ["Machine / Tool",      "gugu",     "goo-goo"],
+    ["Network / Connect",   "nini",     "nee-nee"],
+    ["Rest / Sleep",        "mumu",     "moo-moo"],
+    ["Health / Energy",     "bəbə",     "buh-buh"],
+    ["Smoke / Fog",         "huhu",     "hoo-hoo"],
+    ["City / Town",         "kuku",     "koo-koo"],
+    ["Money / Value",       "mami",     "mah-mee"],
+    ["Paper / Book",        "pata",     "pah-tah"],
+    ["Learn / Study",       "kipa",     "kee-pah"],
+    ["Music / Song",        "lala",     "lah-lah"],
+    ["Room / Space",        "buku",     "boo-koo"],
+    ["Friend",              "pəna",     "puh-nah"],
+    ["Love",                "muba",     "moo-bah"],
+    ["Animal",              "batu",     "bah-too"],
+    ["Plant / Tree",        "puti",     "poo-tee"],
+    ["Color",               "kama",     "kah-mah"],
+    ["Light / Sun",         "hata",     "hah-tah"],
+    ["Dark / Night",        "dumu",     "doo-moo"],
+    ["Hard / Solid",        "taka",     "tah-kah"],
+    ["Soft / Liquid",       "musa",     "moo-sah"],
+    ["Clean",               "pipi",     "pee-pee"],
+    ["Dirty",               "gaba",     "gah-bah"],
+    ["Full",                "bubu",     "boo-boo"],
+    ["Empty",               "hubu",     "hoo-boo"],
+    ["Heavy",               "daba",     "dah-bah"],
+    ["Lightweight",         "puhu",     "poo-hoo"],
+    ["Open",                "paba",     "pah-bah"],
+    ["Closed",              "tuku",     "too-koo"],
+    ["Start",               "bigi",     "bee-gee"],
+    ["Stop",                "putu",     "poo-too"],
+    ["Win",                 "wawa",     "wah-wah"],
+    ["Lose",                "nana",     "nah-nah"],
+    ["Buy",                 "gipa",     "gee-pah"],
+    ["Sell",                "pagi",     "pah-gee"],
+    ["Build / Create",      "kutu",     "koo-too"],
+    ["Break / Destroy",     "kaka",     "kah-kah"],
+    ["Wait",                "titi",     "tee-tee"],
+    ["Move",                "wuwu",     "woo-woo"],
+    ["Read",                "nipa",     "nee-pah"],
+    ["Write",               "tipa",     "tee-pah"],
+    ["Eat",                 "məmu",     "muh-moo"],
+    ["Drink",               "wata",     "wah-tah"],
+    ["Walk",                "waku",     "wah-koo"],
+    ["Talk / Converse",     "susu",     "soo-soo"],
+    ["Listen",              "hini",     "hee-nee"],
+    ["Watch / Stare",       "sasa",     "sah-sah"],
+    ["Understand",          "nəna",     "nuh-nah"],
+    ["Remember",            "mimi",     "mee-mee"],
+    ["Forget",              "fufu",     "foo-foo"],
+    ["Question",            "kaku",     "kah-koo"],
+    ["Answer",              "tada",     "tah-dah"],
+    ["Reason / Why",        "hawa",     "hah-wah"],
+    ["Because",             "bika",     "bee-kah"],
+    ["Always",              "tawa",     "tah-wah"],
+    ["Never",               "nawa",     "nah-wah"],
+    ["Sometimes",           "tama",     "tah-mah"],
+    ["Soon",                "nuta",     "noo-tah"],
+    ["Later",               "latə",     "lah-tuh"],
+    ["Early",               "fata",     "fah-tah"],
+    ["Late",                "tula",     "too-lah"],
+    ["Near",                "nena",     "neh-nah"],
+    ["Far",                 "fafa",     "fah-fah"],
+    ["Up",                  "pupu",     "poo-poo"],
+    ["Down",                "dudu",     "doo-doo"],
+    ["Left",                "lefa",     "leh-fah"],
+    ["Right (direction)",   "laita",    "lah-ee-tah"],
+    ["Front",               "fana",     "fah-nah"],
+    ["Back",                "baka",     "bah-kah"],
+    ["Side",                "sida",     "see-dah"],
+    ["Center",              "mida",     "mee-dah"],
+    ["Top",                 "tapa",     "tah-pah"],
+    ["Bottom",              "bata",     "bah-tah"],
+    ["Inside",              "nisa",     "nee-sah"],
+    ["Outside",             "sauta",    "sow-tah"],
+    ["Shape",               "sapa",     "sah-pah"],
+    ["Line",                "lana",     "lah-nah"],
+    ["Circle",              "lulu",     "loo-loo"],
+    ["Square",              "kaba",     "kah-bah"],
+    ["Number",              "nuba",     "noo-bah"],
+
+    // ── NUMBERS ─────────────────────────────────────────────
+    ["One",                 "wa",       "wah"],
+    ["Two",                 "tu",       "too"],
+    ["Three",               "ti",       "tee"],
+    ["Four",                "fo",       "foh"],
+    ["Five",                "fa",       "fah"],
+    ["Six",                 "si",       "see"],
+    ["Seven",               "se",       "seh"],
+    ["Eight",               "ei",       "ay"],
+    ["Nine",                "nai",      "nye"],
+    ["Ten",                 "tena",     "teh-nah"],
+    ["Hundred",             "hanede",   "hah-neh-deh"],
+    ["Thousand",            "tona",     "toh-nah"],
+    ["Zero / None",         "nunu",     "noo-noo"],
+
+    // ── QUANTIFIERS & MODALS ────────────────────────────────
+    ["Many / Much",         "mulu",     "moo-loo"],
+    ["Few / Little",        "mini",     "mee-nee"],
+    ["All",                 "ala",      "ah-lah"],
+    ["Some",                "sama",     "sah-mah"],
+    ["More",                "mua",      "moo-ah"],
+    ["Less",                "lesa",     "leh-sah"],
+    ["Very",                "baba",     "bah-bah"],
+    ["Too (excess)",        "tubi",     "too-bee"],
+    ["Almost",              "mosa",     "moh-sah"],
+    ["Enough",              "nufa",     "noo-fah"],
+    ["Maybe",               "mebi",     "meh-bee"],
+    ["Must",                "mata",     "mah-tah"],
+    ["Can",                 "kana",     "kah-nah"],
+
+    // ── QUESTION WORDS ──────────────────────────────────────
+    ["Where",               "kape",     "kah-peh"],
+    ["When",                "kata",     "kah-tah"],
+    ["Who",                 "kai",      "kah-ee"],
+    ["How",                 "kawe",     "kah-weh"],
+    ["What",                "kati",     "kah-tee"],
+    ["Why",                 "kahawa",   "kah-hah-wah"],
+    ["How many / How much", "kamulu",   "kah-moo-loo"],
+
+    // ── TIME ────────────────────────────────────────────────
+    ["Tomorrow",            "nude",     "noo-deh"],
+    ["Yesterday",           "pade",     "pah-deh"],
+    ["Morning",             "deta",     "deh-tah"],
+    ["Afternoon",           "depa",     "deh-pah"],
+    ["Evening / Sunset",    "desolo",   "deh-soh-loh"],
+    ["Night (time)",        "dedumu",   "deh-doo-moo"],
+    ["Before / Prior",      "panu",     "pah-noo"],
+    ["After",               "nupa",     "noo-pah"],
+    ["Hour",                "tapi",     "tah-pee"],
+    ["Minute",              "tami",     "tah-mee"],
+    ["Month",               "monu",     "moh-noo"],
+    ["Year",                "tonu",     "toh-noo"],
+    ["Season",              "tawade",   "tah-wah-deh"],
+    ["Sunrise",             "hatade",   "hah-tah-deh"],
+    ["Sunset",              "solade",   "soh-lah-deh"],
+    ["Midnight",            "dumude",   "doo-moo-deh"],
+    ["Century",             "tonubu",   "toh-noo-boo"],
+
+    // ── GREETINGS & PATOIS SLANG ────────────────────────────
+    ["Hello / Goodbye / Peace",   "alo",     "ah-loh"],
+    ["What's up / How are you",   "waga",    "wah-gah"],
+    ["Thank you / Grateful",      "mala",    "mah-lah"],
+    ["Please / Beg",              "pili",    "pee-lee"],
+    ["Sorry / Apology",           "soli",    "soh-lee"],
+    ["Yes man / Agreed",          "wama",    "wah-mah"],
+    ["Cool / Awesome",            "bobo",    "boh-boh"],
+    ["Crazy / Wild",              "lolo",    "loh-loh"],
+    ["Chill / Relax",             "mili",    "mee-lee"],
+    ["Brother / Bro",             "dada",    "dah-dah"],
+    ["Sister / Sis",              "sisi",    "see-see"],
+    ["Family / Fam",              "fama",    "fah-mah"],
+    ["Wow / OMG",                 "wowo",    "woh-woh"],
+    ["Joke / Funny",              "hihi",    "hee-hee"],
+    ["Fake / Lie",                "fifi",    "fee-fee"],
+    ["True / Real",               "tulu",    "too-loo"],
+    ["Stupid / Dumb",             "dodo",    "doh-doh"],
+    ["Smart / Genius",            "koko",    "koh-koh"],
+    ["Yo / Hey",                  "do",      "doh"],
+    ["Really? / Is it true?",     "tuluka",  "too-loo-kah"],
+    ["Check / Examine",           "sano",    "sah-noh"],
+    ["Sunlight / Sunshine",       "hatasa",  "hah-tah-sah"],
+    ["Hurry / Fast",              "wiki",    "wee-kee"],
+    ["Work / Hustle",             "hana",    "hah-nah"],
+    ["Party / Dance",             "hula",    "hoo-lah"],
+    ["Tired / Exhausted",         "dede",    "deh-deh"],
+
+    // ── EMOTIONS & MENTAL STATES ────────────────────────────
+    ["Angry / Mad",         "noka",     "noh-kah"],
+    ["Scared / Fear",       "bimi",     "bee-mee"],
+    ["Surprised",           "waho",     "wah-hoh"],
+    ["Excited",             "pika",     "pee-kah"],
+    ["Bored",               "dugu",     "doo-goo"],
+    ["Confused",            "hulu",     "hoo-loo"],
+    ["Calm / Peace",        "malo",     "mah-loh"],
+    ["Lonely",              "nopa",     "noh-pah"],
+    ["Proud",               "guba",     "goo-bah"],
+    ["Shame / Embarrassed", "samu",     "sah-moo"],
+    ["Jealous / Envy",      "biku",     "bee-koo"],
+    ["Worry / Anxious",     "nugu",     "noo-goo"],
+    ["Hope",                "wapi",     "wah-pee"],
+    ["Trust",               "tano",     "tah-noh"],
+    ["Hate",                "kibo",     "kee-boh"],
+    ["Miss / Longing",      "puna",     "poo-nah"],
+    ["Disgust",             "gibo",     "gee-boh"],
+
+    // ── BODY & HEALTH ───────────────────────────────────────
+    ["Head",                "kapu",     "kah-poo"],
+    ["Face",                "maka",     "mah-kah"],
+    ["Mouth",               "waha",     "wah-hah"],
+    ["Ear",                 "pepe",     "peh-peh"],
+    ["Nose",                "ihu",      "ee-hoo"],
+    ["Foot / Leg",          "pede",     "peh-deh"],
+    ["Belly / Stomach",     "buga",     "boo-gah"],
+    ["Heart",               "pumu",     "poo-moo"],
+    ["Breath",              "hemi",     "heh-mee"],
+    ["Blood",               "kula",     "koo-lah"],
+    ["Bone",                "hoki",     "hoh-kee"],
+    ["Skin",                "kito",     "kee-toh"],
+    ["Sweat",               "pasə",     "pah-suh"],
+    ["Hungry",              "bono",     "boh-noh"],
+    ["Thirsty",             "waku",     "wah-koo"],
+    ["Sick / Ill",          "moka",     "moh-kah"],
+    ["Pain / Hurt",         "duga",     "doo-gah"],
+    ["Sleepy",              "numu",     "noo-moo"],
+    ["Sleep",               "motu",     "moh-too"],
+    ["Wake",                "kupi",     "koo-pee"],
+    ["Heal / Cure",         "suba",     "soo-bah"],
+    ["Medicine / Drug",     "dawa",     "dah-wah"],
+    ["Dead / Death",        "noku",     "noh-koo"],
+    ["Birth / Born",        "pumo",     "poo-moh"],
+    ["Grow",                "liku",     "lee-koo"],
+    ["Pregnant",            "buto",     "boo-toh"],
+
+    // ── FOOD & DRINK ────────────────────────────────────────
+    ["Rice / Grain",        "komi",     "koh-mee"],
+    ["Meat / Flesh",        "namu",     "nah-moo"],
+    ["Fruit",               "popa",     "poh-pah"],
+    ["Salt",                "saki",     "sah-kee"],
+    ["Bread",               "panu",     "pah-noo"],
+    ["Milk",                "wami",     "wah-mee"],
+    ["Oil / Fat",           "sulo",     "soo-loh"],
+    ["Sugar",               "meko",     "meh-koh"],
+    ["Cook / Prepare food", "kanu",     "kah-noo"],
+    ["Boil",                "bula",     "boo-lah"],
+    ["Smoke (food)",        "tasu",     "tah-soo"],
+    ["Cup / Bowl",          "kopo",     "koh-poh"],
+    ["Plate / Dish",        "pali",     "pah-lee"],
+    ["Knife",               "nabi",     "nah-bee"],
+    ["Bag / Container",     "saku",     "sah-koo"],
+
+    // ── WEATHER & ENVIRONMENT ───────────────────────────────
+    ["Sky / Heaven",        "lani",     "lah-nee"],
+    ["Moon",                "muna",     "moo-nah"],
+    ["Star",                "sita",     "see-tah"],
+    ["Rain",                "pulu",     "poo-loo"],
+    ["Cloud",               "loka",     "loh-kah"],
+    ["Storm",               "buta",     "boo-tah"],
+    ["Flood",               "wanu",     "wah-noo"],
+    ["Snow / Ice",          "hoku",     "hoh-koo"],
+    ["Shadow / Shade",      "hubi",     "hoo-bee"],
+    ["Earthquake",          "natu",     "nah-too"],
+    ["Volcano",             "puhata",   "poo-hah-tah"],
+    ["River",               "lopa",     "loh-pah"],
+    ["Sea / Ocean",         "tabi",     "tah-bee"],
+    ["Sand",                "paka",     "pah-kah"],
+    ["Stone / Rock",        "toku",     "toh-koo"],
+    ["Mountain",            "kuna",     "koo-nah"],
+    ["Forest / Jungle",     "wuna",     "woo-nah"],
+    ["Cave",                "hobu",     "hoh-boo"],
+    ["Lake",                "wapu",     "wah-poo"],
+    ["Island",              "mosi",     "moh-see"],
+    ["Soil / Dirt",         "danu",     "dah-noo"],
+    ["Danger / Warning",    "hala",     "hah-lah"],
+    ["Strong / Power",      "mana",     "mah-nah"],
+    ["Secret / Hidden",     "huna",     "hoo-nah"],
+
+    // ── SOCIETY & GOVERNANCE ────────────────────────────────
+    ["Government",          "manaka",   "mah-nah-kah"],
+    ["Law / Rule",          "laka",     "lah-kah"],
+    ["Power / Authority",   "kona",     "koh-nah"],
+    ["Leader / Chief",      "datu",     "dah-too"],
+    ["War / Conflict",      "taba",     "tah-bah"],
+    ["Peace (state)",       "malo",     "mah-loh"],
+    ["Enemy",               "boka",     "boh-kah"],
+    ["Army / Soldiers",     "tapoma",   "tah-poh-mah"],
+    ["Police",              "kapuna",   "kah-poo-nah"],
+    ["Prison / Jail",       "tukale",   "too-kah-leh"],
+    ["Freedom / Liberty",   "hola",     "hoh-lah"],
+    ["Vote / Choose",       "pino",     "pee-noh"],
+    ["King / Queen",        "alani",    "ah-lah-nee"],
+    ["Nation / Country",    "nasi",     "nah-see"],
+    ["Border / Limit",      "kabo",     "kah-boh"],
+    ["Tax",                 "gabo",     "gah-boh"],
+    ["Rights",              "beno",     "beh-noh"],
+    ["Revolution",          "topali",   "toh-pah-lee"],
+    ["Contract / Agreement","bande",    "bah-ndeh"],
+    ["Justice",             "satuka",   "sah-too-kah"],
+
+    // ── ECONOMY & TRADE ─────────────────────────────────────
+    ["Debt / Owe",          "nodo",     "noh-doh"],
+    ["Price / Cost",        "dako",     "dah-koh"],
+    ["Pay",                 "gibu",     "gee-boo"],
+    ["Steal / Rob",         "kabu",     "kah-boo"],
+    ["Trade / Exchange",    "tupa",     "too-pah"],
+    ["Market / Shop",       "hoku",     "hoh-koo"],
+    ["Profit / Gain",       "wuba",     "woo-bah"],
+    ["Loss / Waste",        "nabo",     "nah-boh"],
+    ["Share / Divide",      "pitu",     "pee-too"],
+    ["Bank / Store",        "bano",     "bah-noh"],
+    ["Coin / Currency",     "moki",     "moh-kee"],
+    ["Gift / Donation",     "dago",     "dah-goh"],
+    ["Hire / Employ",       "kudi",     "koo-dee"],
+    ["Fire / Dismiss",      "huba",     "hoo-bah"],
+
+    // ── TECHNOLOGY & MODERN LIFE ────────────────────────────
+    ["House / Home",        "hale",     "hah-leh"],
+    ["Clothes / Wear",      "kapa",     "kah-pah"],
+    ["Phone / Device",      "pono",     "poh-noh"],
+    ["Computer",            "koputewa", "koh-poo-teh-wah"],
+    ["Internet",            "niniwi",   "nee-nee-wee"],
+    ["Message / Text",      "supo",     "soo-poh"],
+    ["Screen / Display",    "siku",     "see-koo"],
+    ["Button / Switch",     "piku",     "pee-koo"],
+    ["Power / Electricity", "watu",     "wah-too"],
+    ["Battery / Charge",    "koti",     "koh-tee"],
+    ["Camera",              "samaka",   "sah-mah-kah"],
+    ["Video",               "sito",     "see-toh"],
+    ["Audio / Sound",       "somu",     "soh-moo"],
+    ["Software / App",      "winu",     "wee-noo"],
+    ["Data / File",         "tibo",     "tee-boh"],
+    ["Password",            "hukipo",   "hoo-kee-poh"],
+    ["Signal / Wave",       "kowi",     "koh-wee"],
+    ["Robot",               "gotuma",   "goh-too-mah"],
+    ["Satellite",           "sitala",   "see-tah-lah"],
+    ["Engine / Motor",      "pugumu",   "poo-goo-moo"],
+
+    // ── TRANSPORT & MOVEMENT ────────────────────────────────
+    ["Road / Street",       "weka",     "weh-kah"],
+    ["Bridge",              "hoba",     "hoh-bah"],
+    ["Vehicle / Car",       "kotuma",   "koh-too-mah"],
+    ["Boat / Ship",         "waka",     "wah-kah"],
+    ["Plane",               "pupima",   "poo-pee-mah"],
+    ["Train",               "tanu",     "tah-noo"],
+    ["Carry / Transport",   "luba",     "loo-bah"],
+    ["Arrive",              "dano",     "dah-noh"],
+    ["Depart",              "wela",     "weh-lah"],
+    ["Lost / Astray",       "nulo",     "noo-loh"],
+    ["Map / Guide",         "patuma",   "pah-too-mah"],
+    ["Destination",         "peonu",    "peh-oh-noo"],
+    ["Journey / Trip",      "wekanu",   "weh-kah-noo"],
+
+    // ── RELATIONSHIPS & FAMILY ──────────────────────────────
+    ["Mother / Mama",       "mama",     "mah-mah"],
+    ["Father / Papa",       "papa",     "pah-pah"],
+    ["Baby / Infant",       "bebe",     "beh-beh"],
+    ["Grandparent",         "tupuna",   "too-poo-nah"],
+    ["Husband / Wife",      "noba",     "noh-bah"],
+    ["Partner",             "kotami",   "koh-tah-mee"],
+    ["Stranger",            "nokoma",   "noh-koh-mah"],
+    ["Guest / Visitor",     "wiama",    "wee-ah-mah"],
+    ["Neighbour",           "neba",     "neh-bah"],
+    ["Orphan",              "hopuna",   "hoh-poo-nah"],
+    ["Elder",               "kupuna",   "koo-poo-nah"],
+    ["Couple / Pair",       "tuboa",    "too-boh-ah"],
+    ["Marriage / Wed",      "honoba",   "hoh-noh-bah"],
+    ["Divorce / Split",     "keba",     "keh-bah"],
+
+    // ── PLACES & STRUCTURES ─────────────────────────────────
+    ["Village",             "baluma",   "bah-loo-mah"],
+    ["Temple / Church",     "kahale",   "kah-hah-leh"],
+    ["Hospital",            "mokale",   "moh-kah-leh"],
+    ["School",              "kipale",   "kee-pah-leh"],
+    ["Toilet / Bathroom",   "wahale",   "wah-hah-leh"],
+    ["Kitchen",             "fumale",   "foo-mah-leh"],
+    ["Gate / Door",         "puka",     "poo-kah"],
+    ["Window",              "mawi",     "mah-wee"],
+    ["Floor / Ground",      "danu",     "dah-noo"],
+    ["Wall",                "paku",     "pah-koo"],
+    ["Roof",                "paho",     "pah-hoh"],
+    ["Bed",                 "molu",     "moh-loo"],
+    ["Table",               "maku",     "mah-koo"],
+    ["Chair",               "nobu",     "noh-boo"],
+    ["Stairs",              "tapede",   "tah-peh-deh"],
+    ["Field / Open land",   "pano",     "pah-noh"],
+    ["Port / Harbour",      "wapu",     "wah-poo"],
+    ["Stadium",             "hulale",   "hoo-lah-leh"],
+
+    // ── CLOTHING & APPEARANCE ───────────────────────────────
+    ["Hat / Cap",           "poka",     "poh-kah"],
+    ["Shoe / Sandal",       "kapede",   "kah-peh-deh"],
+    ["Shirt / Top",         "kapo",     "kah-poh"],
+    ["Jewellery",           "minoki",   "mee-noh-kee"],
+    ["Smell / Scent",       "honu",     "hoh-noo"],
+
+    // ── ACTIONS (EXTENDED) ──────────────────────────────────
+    ["Hit / Strike",        "taba",     "tah-bah"],
+    ["Push",                "puba",     "poo-bah"],
+    ["Pull",                "gula",     "goo-lah"],
+    ["Throw",               "tolu",     "toh-loo"],
+    ["Catch",               "kipa",     "kee-pah"],
+    ["Hold / Grip",         "tamu",     "tah-moo"],
+    ["Drop / Release",      "laga",     "lah-gah"],
+    ["Lift / Raise",        "bola",     "boh-lah"],
+    ["Dig",                 "kanu",     "kah-noo"],
+    ["Cut",                 "soku",     "soh-koo"],
+    ["Tie / Bind",          "bono",     "boh-noh"],
+    ["Wash / Clean",        "piwa",     "pee-wah"],
+    ["Fix / Repair",        "konu",     "koh-noo"],
+    ["Mix / Blend",         "miku",     "mee-koo"],
+    ["Pour",                "polu",     "poh-loo"],
+    ["Burn",                "fatu",     "fah-too"],
+    ["Melt",                "solu",     "soh-loo"],
+    ["Plant (verb)",        "tupu",     "too-poo"],
+    ["Harvest",             "hakonu",   "hah-koh-noo"],
+    ["Hunt",                "lomu",     "loh-moo"],
+    ["Swim",                "wawi",     "wah-wee"],
+    ["Jump",                "piku",     "pee-koo"],
+    ["Sit",                 "nobu",     "noh-boo"],
+    ["Stand",               "toku",     "toh-koo"],
+    ["Bow / Greet",         "hobu",     "hoh-boo"],
+    ["Sing",                "lali",     "lah-lee"],
+    ["Laugh",               "hiwa",     "hee-wah"],
+    ["Cry",                 "wali",     "wah-lee"],
+    ["Hug / Embrace",       "pomu",     "poh-moo"],
+    ["Kiss",                "homi",     "hoh-mee"],
+    ["Fight / Battle",      "tabu",     "tah-boo"],
+    ["Escape",              "weli",     "weh-lee"],
+    ["Follow",              "tabo",     "tah-boh"],
+    ["Search / Look for",   "sani",     "sah-nee"],
+    ["Agree",               "tano",     "tah-noh"],
+    ["Refuse / Deny",       "noba",     "noh-bah"],
+    ["Promise",             "tulumi",   "too-loo-mee"],
+    ["Warn",                "halami",   "hah-lah-mee"],
+    ["Celebrate",           "hulami",   "hoo-lah-mee"],
+    ["Invite",              "komiwa",   "koh-mee-wah"],
+    ["Borrow",              "gutu",     "goo-too"],
+    ["Return / Give back",  "bagi",     "bah-gee"],
+    ["Protect / Guard",     "kapoma",   "kah-poh-mah"],
+    ["Attack",              "tabonu",   "tah-boh-noo"],
+    ["Surrender",           "nalami",   "nah-lah-mee"],
+    ["Choose / Pick",       "pino",     "pee-noh"],
+    ["Exist / There is",    "mona",     "moh-nah"],
+    ["Change / Transform",  "boku",     "boh-koo"],
+    ["Connect / Link",      "kone",     "koh-neh"],
+    ["Separate / Apart",    "heba",     "heh-bah"],
+    ["Bow / Submit",        "hobi",     "hoh-bee"],
+
+    // ── COLOURS ─────────────────────────────────────────────
+    ["Red",                 "kula",     "koo-lah"],
+    ["Blue",                "tabi",     "tah-bee"],
+    ["Green",               "wanu",     "wah-noo"],
+    ["Yellow",              "meli",     "meh-lee"],
+    ["White",               "hoke",     "hoh-keh"],
+    ["Black",               "noku",     "noh-koo"],
+    ["Brown",               "bato",     "bah-toh"],
+    ["Pink",                "namika",   "nah-mee-kah"],
+    ["Orange (colour)",     "kulame",   "koo-lah-meh"],
+    ["Purple",              "tabula",   "tah-boo-lah"],
+    ["Grey",                "musu",     "moo-soo"],
+
+    // ── ANIMALS ─────────────────────────────────────────────
+    ["Cat",                 "neko",     "neh-koh"],
+    ["Bird",                "manu",     "mah-noo"],
+    ["Fish",                "ika",      "ee-kah"],
+    ["Snake",               "lona",     "loh-nah"],
+    ["Horse",               "pio",      "pee-oh"],
+    ["Cow / Bull",          "popo",     "poh-poh"],
+    ["Pig",                 "puwa",     "poo-wah"],
+    ["Chicken / Hen",       "moa",      "moh-ah"],
+    ["Insect / Bug",        "batuki",   "bah-too-kee"],
+    ["Monkey",              "koke",     "koh-keh"],
+    ["Lion / Tiger",        "liona",    "lee-oh-nah"],
+    ["Elephant",            "poloma",   "poh-loh-mah"],
+    ["Whale / Big fish",    "tabima",   "tah-bee-mah"],
+    ["Spider",              "kupila",   "koo-pee-lah"],
+
+    // ── SCHOOL & KNOWLEDGE ──────────────────────────────────
+    ["Teacher",             "kipama",   "kee-pah-mah"],
+    ["Student / Pupil",     "kipata",   "kee-pah-tah"],
+    ["Test / Exam",         "sanopa",   "sah-noh-pah"],
+    ["Subject / Topic",     "tanimi",   "tah-nee-mee"],
+    ["Language",            "sumu",     "soo-moo"],
+    ["Word",                "watu",     "wah-too"],
+    ["Sentence",            "watuka",   "wah-too-kah"],
+    ["Math / Numbers",      "nubawa",   "noo-bah-wah"],
+    ["Science",             "saniwa",   "sah-nee-wah"],
+    ["Art",                 "tuto",     "too-toh"],
+    ["Grade / Score",       "ponuba",   "poh-noo-bah"],
+    ["Library",             "patale",   "pah-tah-leh"],
+    ["Pen / Pencil",        "tipati",   "tee-pah-tee"],
+    ["Homework",            "hanawo",   "hah-nah-woh"],
+
+    // ── SPORTS & PLAY ───────────────────────────────────────
+    ["Ball",                "bola",     "boh-lah"],
+    ["Team",                "tapomi",   "tah-poh-mee"],
+    ["Goal / Score",        "pono",     "poh-noh"],
+    ["Race / Compete",      "wikipa",   "wee-kee-pah"],
+    ["Champion / Best",     "bawiki",   "bah-wee-kee"],
+    ["Game / Match",        "huli",     "hoo-lee"],
+    ["Toy",                 "peliti",   "peh-lee-tee"],
+    ["Climb",               "likupa",   "lee-koo-pah"],
+
+    // ── RELIGION & RITUAL ───────────────────────────────────
+    ["God / Divine",        "akua",     "ah-koo-ah"],
+    ["Prayer / Worship",    "kumomi",   "koo-moh-mee"],
+    ["Ritual / Ceremony",   "hulano",   "hoo-lah-noh"],
+    ["Blessing",            "malabu",   "mah-lah-boo"],
+    ["Curse / Hex",         "kibono",   "kee-boh-noh"],
+    ["Ghost / Spirit",      "wanua",    "wah-noo-ah"],
+    ["Omen / Sign",         "notika",   "noh-tee-kah"],
+    ["Ancestor",            "kupana",   "koo-pah-nah"],
+    ["Sacrifice",           "tabomi",   "tah-boh-mee"],
+
+    // ── ABSTRACT & PHILOSOPHY ───────────────────────────────
+    ["Spirit / Soul",       "wanu",     "wah-noo"],
+    ["Dream",               "mita",     "mee-tah"],
+    ["Sign / Symbol",       "noti",     "noh-tee"],
+    ["Story / Narrative",   "katata",   "kah-tah-tah"],
+    ["History / Past",      "pakono",   "pah-koh-noh"],
+    ["Future (concept)",    "nukono",   "noo-koh-noh"],
+    ["Belief / Faith",      "tanomi",   "tah-noh-mee"],
+    ["Opinion / View",      "nopi",     "noh-pee"],
+    ["Luck / Fortune",      "wapo",     "wah-poh"],
+    ["Fate / Destiny",      "nulani",   "noo-lah-nee"],
+    ["Purpose / Goal",      "ponuwe",   "poh-noo-weh"],
+    ["Mistake / Error",     "suboki",   "soo-boh-kee"],
+    ["Lesson / Moral",      "kipano",   "kee-pah-noh"],
+    ["Wisdom",              "konomi",   "koh-noh-mee"],
+    ["Equal / Balance",     "tano",     "tah-noh"],
 ];
 
-let dbData = [];
-let selectedIndex = -1;
+// ============================================================
+//  TRANSLATION ENGINE
+// ============================================================
 
-// --- DATA MANAGEMENT ---
-function loadData() {
-    const saved = localStorage.getItem("woobi_db");
-    if (saved) {
-        dbData = JSON.parse(saved);
-    } else {
-        // First load, populate from default array
-        dbData = DEFAULT_WOOBI_DB.map(item => ({ english: item[0], woobi: item[1], pronunciation: item[2] }));
-        saveData();
-    }
-    renderTable();
-}
-
-function saveData() {
-    localStorage.setItem("woobi_db", JSON.stringify(dbData));
-}
-
-// --- UI UPDATES ---
-function renderTable(searchTerm = "") {
-    const tbody = document.getElementById("dictBody");
-    tbody.innerHTML = "";
-    selectedIndex = -1; // reset selection
-
-    const term = searchTerm.toLowerCase();
-
-    dbData.forEach((item, index) => {
-        if (item.english.toLowerCase().includes(term) || item.woobi.toLowerCase().includes(term)) {
-            const tr = document.createElement("tr");
-            tr.onclick = () => selectRow(tr, index);
-            
-            tr.innerHTML = `
-                <td>${item.english}</td>
-                <td>${item.woobi}</td>
-                <td>${item.pronunciation}</td>
-            `;
-            tbody.appendChild(tr);
-        }
-    });
-}
-
-function selectRow(rowElement, index) {
-    // Remove selected class from all
-    const rows = document.querySelectorAll("#dictBody tr");
-    rows.forEach(r => r.classList.remove("selected"));
-    
-    // Add to clicked
-    rowElement.classList.add("selected");
-    selectedIndex = index;
-}
-
-function onSearch() {
-    const term = document.getElementById("searchInput").value;
-    renderTable(term);
-}
-
-function addWord() {
-    const eng = document.getElementById("engInput").value.trim();
-    const woo = document.getElementById("wooInput").value.trim();
-    const pron = document.getElementById("pronInput").value.trim();
-
-    if (eng && woo) {
-        // Insert at beginning to match Python behavior
-        dbData.unshift({ english: eng, woobi: woo, pronunciation: pron });
-        saveData();
-        
-        // Clear inputs and search
-        document.getElementById("engInput").value = "";
-        document.getElementById("wooInput").value = "";
-        document.getElementById("pronInput").value = "";
-        document.getElementById("searchInput").value = "";
-        
-        renderTable();
-    } else {
-        alert("Please provide at least the English word and Woobi sound.");
-    }
-}
-
-function deleteWord() {
-    if (selectedIndex === -1) {
-        alert("Please click on a word in the table to select it for deletion.");
-        return;
-    }
-
-    if (confirm("Delete selected word?")) {
-        dbData.splice(selectedIndex, 1);
-        saveData();
-        renderTable(document.getElementById("searchInput").value);
-    }
-}
-
-// --- TRANSLATION ENGINE LOGIC ---
-function getLookupDict() {
-    let lookup = {};
-    dbData.forEach(item => {
-        let englishWords = item.english.toLowerCase().split("/");
-        englishWords.forEach(w => {
-            lookup[w.trim()] = item.woobi.trim();
+// Build a flat lookup: { "english phrase" → "woobi" }
+// Handles multi-word phrases by splitting on "/"
+function buildLookup() {
+    const lookup = {};
+    WOOBI_DB.forEach(item => {
+        const [english, woobi] = item;
+        english.toLowerCase().split("/").forEach(phrase => {
+            const key = phrase
+                .replace(/'/g, "")
+                .replace(/[^\w\s]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+            if (key && !lookup[key]) {
+                lookup[key] = woobi.trim();
+            }
         });
     });
     return lookup;
 }
 
+// Clean an input string for lookup
+function cleanText(str) {
+    return str
+        .replace(/'/g, "")
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, " ")
+        .toLowerCase()
+        .trim();
+}
+
+// Phonetic adaptation of unknown words into Woobi CV structure
 function woobify(word) {
     let w = word.toLowerCase();
-    const replacements = {
-        "th":"t", "sh":"s", "ch":"s", "ph":"p", "ck":"k", 
-        "r":"w", "l":"w", "v":"b", "f":"p", "z":"s", "c":"k", "j":"d"
-    };
-    
-    // Replace consonant clusters
-    for (const [oldChar, newChar] of Object.entries(replacements)) {
-        w = w.split(oldChar).join(newChar);
+
+    // ── Sound substitutions (banned/complex → allowed) ──
+    const subs = [
+        ["th", "t"], ["sh", "s"], ["ch", "s"], ["ph", "p"],
+        ["ck", "k"], ["qu", "ku"], ["r",  "l"], ["v",  "b"],
+        ["z",  "s"], ["x",  "ks"], ["c", "k"],  ["j", "d"],
+        ["y",  "w"]
+    ];
+    for (const [from, to] of subs) {
+        w = w.split(from).join(to);
     }
-    
-    // Remove consecutive duplicate letters
-    w = w.replace(/(.)\1+/g, '$1');
-    
-    // Force CV ending
-    if (!"aeioumn".includes(w.slice(-1))) {
-        w += "a";
+
+    // Remove duplicate consecutive consonants
+    w = w.replace(/([bcdfgklmnpstw])\1+/g, "$1");
+
+    // Break consonant clusters by inserting 'a'
+    const vowels = new Set(["a","e","i","o","u","ə"]);
+    let out = "";
+    for (let idx = 0; idx < w.length; idx++) {
+        out += w[idx];
+        const next = w[idx + 1];
+        if (next && !vowels.has(w[idx]) && !vowels.has(next)) {
+            out += "a";
+        }
     }
-    
-    // Capitalize first letter
+    w = out;
+
+    // Ensure word ends in vowel or nasal
+    if (!"aeiouəmn".includes(w.slice(-1))) w += "a";
+
     return w.charAt(0).toUpperCase() + w.slice(1);
 }
 
-function handleEnter(e) {
-    if (e.key === 'Enter') {
+function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
         translateSentence();
     }
 }
 
 function translateSentence() {
-    const rawSentence = document.getElementById("sentenceInput").value.trim();
-    if (!rawSentence) return;
+    const raw = document.getElementById("sentenceInput").value.trim();
+    if (!raw) return;
 
-    // Strip punctuation and split
-    const cleanSentence = rawSentence.replace(/[^\w\s]/g, '').toLowerCase();
-    const words = cleanSentence.split(/\s+/);
-    const lookup = getLookupDict();
+    // ── 1. Detect ending punctuation ──────────────────────────
+    let endParticle = "";
+    let sentence = raw;
 
-    let outputHTML = "";
+    if (sentence.endsWith("?")) {
+        endParticle = "ka";
+        sentence = sentence.slice(0, -1).trim();
+    } else if (sentence.endsWith("!")) {
+        endParticle = "ne";
+        sentence = sentence.slice(0, -1).trim();
+    } else if (sentence.endsWith(".")) {
+        sentence = sentence.slice(0, -1).trim();
+    }
 
-    words.forEach(word => {
-        if (lookup[word]) {
-            outputHTML += lookup[word] + " ";
-        } else if (word.endsWith('s') && lookup[word.slice(0, -1)]) {
-            // Plural rule
-            outputHTML += lookup[word.slice(0, -1)] + " te ";
-        } else if (word.endsWith('ed') && lookup[word.slice(0, -2)]) {
-            // Past tense rule
-            outputHTML += "pa " + lookup[word.slice(0, -2)] + " ";
-        } else {
-            // Unknown word rule (attached bracket, NO space before it)
-            let woobified = woobify(word);
-            outputHTML += woobified + `<span class="red-bracket">[${word}]</span> `;
+    const clean = cleanText(sentence);
+    const lookup = buildLookup();
+    const hints = [];
+
+    // ── 2. Full-sentence dictionary check ─────────────────────
+    //    e.g. "how are you" → waga  (from "What's up / How are you")
+    if (lookup[clean]) {
+        showOutput(
+            `<span class="woobi-word">${lookup[clean]}</span>`,
+            endParticle, hints
+        );
+        return;
+    }
+
+    // ── 3. Greedy longest-phrase matching + word-by-word ──────
+    const words = clean.split(" ").filter(Boolean);
+    const htmlParts = [];
+    let i = 0;
+
+    while (i < words.length) {
+        let matched = false;
+
+        // Try phrases decreasing from 6 words down to 2
+        for (let len = Math.min(6, words.length - i); len > 1; len--) {
+            const phrase = words.slice(i, i + len).join(" ");
+            if (lookup[phrase]) {
+                htmlParts.push(`<span class="woobi-word">${lookup[phrase]}</span>`);
+                i += len;
+                matched = true;
+                break;
+            }
+        }
+
+        if (!matched) {
+            const word = words[i];
+
+            if (lookup[word]) {
+                // Direct dictionary hit
+                htmlParts.push(`<span class="woobi-word">${lookup[word]}</span>`);
+
+            } else if (word.endsWith("ing") && lookup[word.slice(0, -3)]) {
+                // Drop -ing (no conjugation in Woobi)
+                htmlParts.push(`<span class="woobi-word">${lookup[word.slice(0,-3)]}</span>`);
+
+            } else if (word.endsWith("ed") && lookup[word.slice(0, -2)]) {
+                // Past: pa + verb
+                htmlParts.push(`<span class="woobi-word"><span class="marker-word">pa</span> ${lookup[word.slice(0,-2)]}</span>`);
+                if (!hints.includes("pa = past tense")) hints.push("pa = past tense");
+
+            } else if (word.endsWith("es") && word.length > 3 && lookup[word.slice(0, -2)]) {
+                // Plural: noun + te
+                htmlParts.push(`<span class="woobi-word">${lookup[word.slice(0,-2)]} <span class="marker-word">te</span></span>`);
+                if (!hints.includes("te = plural")) hints.push("te = plural");
+
+            } else if (word.endsWith("s") && word.length > 2 && lookup[word.slice(0, -1)]) {
+                // Plural: noun + te
+                htmlParts.push(`<span class="woobi-word">${lookup[word.slice(0,-1)]} <span class="marker-word">te</span></span>`);
+                if (!hints.includes("te = plural")) hints.push("te = plural");
+
+            } else {
+                // Unknown word → woobify as loanword
+                const woo = woobify(word);
+                htmlParts.push(`<span class="woobi-word">${woo}<span class="unknown-tag">[${word}]</span></span>`);
+            }
+
+            i++;
+        }
+    }
+
+    showOutput(htmlParts.join(" "), endParticle, hints);
+}
+
+function showOutput(bodyHtml, endParticle, hints) {
+    let full = bodyHtml;
+    if (endParticle) {
+        full += ` <span class="marker-word">${endParticle}</span>`;
+        if (endParticle === "ka") hints.push("ka = question marker");
+        if (endParticle === "ne") hints.push("ne = exclamation marker");
+    }
+    document.getElementById("outputBox").innerHTML = full;
+    document.getElementById("grammarHints").innerHTML =
+        hints.map(h => `<span class="hint-chip">${h}</span>`).join("");
+}
+
+// ── Render dictionary table ────────────────────────────────
+function renderTable(term = "") {
+    const tbody = document.getElementById("dictBody");
+    const q = term.toLowerCase();
+    tbody.innerHTML = "";
+    let count = 0;
+
+    WOOBI_DB.forEach(([eng, woo, pron]) => {
+        if (!q || eng.toLowerCase().includes(q) || woo.toLowerCase().includes(q)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML =
+                `<td>${eng}</td><td>${woo}</td><td>${pron || ""}</td>`;
+            tbody.appendChild(tr);
+            count++;
         }
     });
 
-    document.getElementById("outputBox").innerHTML = outputHTML;
+    document.getElementById("wordCount").textContent = count + " entries";
 }
 
-// Initialize app on load
-window.onload = loadData;
+function onSearch() {
+    renderTable(document.getElementById("searchInput").value);
+}
 
+// Init
+renderTable();
 </script>
 </body>
 </html>
