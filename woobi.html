@@ -487,6 +487,7 @@ const WOOBI_DB = [
     ["Plural Marker",       "te",       "teh"],
     ["Past Marker",         "pa",       "pah"],
     ["Future Marker",       "nu",       "noo"],
+    ["Continuous Marker",  "lo",  "loh"],  // lo + verb — "lo wa" = "is doing/making"
     ["Question Marker",     "ka",       "kah"],
     ["Exclamation Marker",  "ne",       "neh"],
 
@@ -561,7 +562,7 @@ const WOOBI_DB = [
     ["Hot",                 "ha",       "hah"],
     ["Cold",                "ko",       "koh"],
     ["Fast",                "fa",       "fah"],
-    ["Slow",                "solo",     "soh-loh"],
+    ["Slow",                "suwa",    "soo-wah"],
     ["Right / True",        "si",       "see"],
     ["Wrong / False",       "su",       "soo"],
     ["Happy",               "ha",       "hah"],
@@ -616,6 +617,8 @@ const WOOBI_DB = [
     ["Mind",                "ma",       "mah"],
     ["Dog",                 "da",       "dah"],
     ["Now",                 "no",       "noh"],
+    ["Boy",             "kama",   "kah-mah"],   // ka (child) + ma (man/person)
+    ["Girl",            "kasi",   "kah-see"],   // ka (child) + si (right/true — feminine softness)
 
     // ── EXTENDED VOCABULARY (CVCV) ───────────────────────────
     ["Fly / Drone",         "pupi",     "poo-pee"],
@@ -633,6 +636,7 @@ const WOOBI_DB = [
     ["Room / Space",        "buku",     "boo-koo"],
     ["Friend",              "pəna",     "puh-nah"],
     ["Love",                "muba",     "moo-bah"],
+    ["Like / Fond of",   "fiba",   "fee-bah"],   // fi (feel) + ba (good) — "feel good toward"
     ["Animal",              "batu",     "bah-too"],
     ["Plant / Tree",        "puti",     "poo-tee"],
     ["Color",               "kama",     "kah-mah"],
@@ -706,8 +710,8 @@ const WOOBI_DB = [
     ["Three",               "ti",       "tee"],
     ["Four",                "fo",       "foh"],
     ["Five",                "fa",       "fah"],
-    ["Six",                 "si",       "see"],
-    ["Seven",               "se",       "seh"],
+    ["Six",                 "sidu",    "see-doo"],
+    ["Seven",               "sebo",    "seh-boh"],
     ["Eight",               "ei",       "ay"],
     ["Nine",                "nai",      "nye"],
     ["Ten",                 "tena",     "teh-nah"],
@@ -775,6 +779,8 @@ const WOOBI_DB = [
     ["Joke / Funny",              "hihi",    "hee-hee"],
     ["Fake / Lie",                "fifi",    "fee-fee"],
     ["True / Real",               "tulu",    "too-loo"],
+    ["Truth",               "tuluti", "too-loo-tee"],// tulu (true) + ti (thing) — "the true thing"
+    ["Liar",                "fifima", "fee-fee-mah"],// fifi (lie) + ma (person) — "lie-person"
     ["Stupid / Dumb",             "dodo",    "doh-doh"],
     ["Smart / Genius",            "koko",    "koh-koh"],
     ["Yo / Hey",                  "do",      "doh"],
@@ -801,7 +807,7 @@ const WOOBI_DB = [
     ["Worry / Anxious",     "nugu",     "noo-goo"],
     ["Hope",                "wapi",     "wah-pee"],
     ["Trust",               "tano",     "tah-noh"],
-    ["Hate",                "kibo",     "kee-boh"],
+    ["Hate",                "gibu",    "gee-boo"],
     ["Miss / Longing",      "puna",     "poo-nah"],
     ["Disgust",             "gibo",     "gee-boh"],
 
@@ -820,7 +826,7 @@ const WOOBI_DB = [
     ["Skin",                "kito",     "kee-toh"],
     ["Sweat",               "pasə",     "pah-suh"],
     ["Hungry",              "bono",     "boh-noh"],
-    ["Thirsty",             "waku",     "wah-koo"],
+    ["Thirsty",             "womi",    "woh-mee"],
     ["Sick / Ill",          "moka",     "moh-kah"],
     ["Pain / Hurt",         "duga",     "doo-gah"],
     ["Sleepy",              "numu",     "noo-moo"],
@@ -838,7 +844,7 @@ const WOOBI_DB = [
     ["Meat / Flesh",        "namu",     "nah-moo"],
     ["Fruit",               "popa",     "poh-pah"],
     ["Salt",                "saki",     "sah-kee"],
-    ["Bread",               "panu",     "pah-noo"],
+    ["Bread",               "benu",    "beh-noo"],
     ["Milk",                "wami",     "wah-mee"],
     ["Oil / Fat",           "sulo",     "soo-loh"],
     ["Sugar",               "meko",     "meh-koh"],
@@ -862,7 +868,7 @@ const WOOBI_DB = [
     ["Shadow / Shade",      "hubi",     "hoo-bee"],
     ["Earthquake",          "natu",     "nah-too"],
     ["Volcano",             "puhata",   "poo-hah-tah"],
-    ["River",               "lopa",     "loh-pah"],
+    ["River",               "lowi",    "loh-wee"],
     ["Sea / Ocean",         "tabi",     "tah-bee"],
     ["Sand",                "paka",     "pah-kah"],
     ["Stone / Rock",        "toku",     "toh-koo"],
@@ -901,10 +907,10 @@ const WOOBI_DB = [
     // ── ECONOMY & TRADE ─────────────────────────────────────
     ["Debt / Owe",          "nodo",     "noh-doh"],
     ["Price / Cost",        "dako",     "dah-koh"],
-    ["Pay",                 "gibu",     "gee-boo"],
+    ["Pay",                 "peko",    "peh-koh"],
     ["Steal / Rob",         "kabu",     "kah-boo"],
     ["Trade / Exchange",    "tupa",     "too-pah"],
-    ["Market / Shop",       "hoku",     "hoh-koo"],
+    ["Market / Shop",       "getu",    "geh-too"],
     ["Profit / Gain",       "wuba",     "woo-bah"],
     ["Loss / Waste",        "nabo",     "nah-boh"],
     ["Share / Divide",      "pitu",     "pee-too"],
@@ -931,7 +937,7 @@ const WOOBI_DB = [
     ["Software / App",      "winu",     "wee-noo"],
     ["Data / File",         "tibo",     "tee-boh"],
     ["Password",            "hukipo",   "hoo-kee-poh"],
-    ["Signal / Wave",       "kowi",     "koh-wee"],
+    ["Signal / Wave",       "kowu",    "koh-woo"],
     ["Robot",               "gotuma",   "goh-too-mah"],
     ["Satellite",           "sitala",   "see-tah-lah"],
     ["Engine / Motor",      "pugumu",   "poo-goo-moo"],
@@ -957,7 +963,7 @@ const WOOBI_DB = [
     ["Baby / Infant",       "bebe",     "beh-beh"],
     ["Grandparent",         "tupuna",   "too-poo-nah"],
     ["Husband / Wife",      "noba",     "noh-bah"],
-    ["Partner",             "kotami",   "koh-tah-mee"],
+    ["Partner",             "kobani",  "koh-bah-nee"],
     ["Stranger",            "nokoma",   "noh-koh-mah"],
     ["Guest / Visitor",     "wiama",    "wee-ah-mah"],
     ["Neighbour",           "neba",     "neh-bah"],
@@ -976,15 +982,15 @@ const WOOBI_DB = [
     ["Kitchen",             "fumale",   "foo-mah-leh"],
     ["Gate / Door",         "puka",     "poo-kah"],
     ["Window",              "mawi",     "mah-wee"],
-    ["Floor / Ground",      "danu",     "dah-noo"],
+    ["Floor / Ground",      "dapi",    "dah-pee"],
     ["Wall",                "paku",     "pah-koo"],
     ["Roof",                "paho",     "pah-hoh"],
     ["Bed",                 "molu",     "moh-loo"],
     ["Table",               "maku",     "mah-koo"],
     ["Chair",               "nobu",     "noh-boo"],
     ["Stairs",              "tapede",   "tah-peh-deh"],
-    ["Field / Open land",   "pano",     "pah-noh"],
-    ["Port / Harbour",      "wapu",     "wah-poo"],
+    ["Field / Open land",   "geno",    "geh-noh"],
+    ["Port / Harbour",      "topa",    "toh-pah"],
     ["Stadium",             "hulale",   "hoo-lah-leh"],
 
     // ── CLOTHING & APPEARANCE ───────────────────────────────
@@ -995,18 +1001,18 @@ const WOOBI_DB = [
     ["Smell / Scent",       "honu",     "hoh-noo"],
 
     // ── ACTIONS (EXTENDED) ──────────────────────────────────
-    ["Hit / Strike",        "taba",     "tah-bah"],
+    ["Hit / Strike",        "tibo",    "tee-boh"],
     ["Push",                "puba",     "poo-bah"],
     ["Pull",                "gula",     "goo-lah"],
     ["Throw",               "tolu",     "toh-loo"],
-    ["Catch",               "kipa",     "kee-pah"],
+    ["Catch",               "lopa",    "loh-pah"],
     ["Hold / Grip",         "tamu",     "tah-moo"],
     ["Drop / Release",      "laga",     "lah-gah"],
     ["Lift / Raise",        "bola",     "boh-lah"],
-    ["Dig",                 "kanu",     "kah-noo"],
+    ["Dig",                 "gadu",    "gah-doo"],
     ["Cut",                 "soku",     "soh-koo"],
-    ["Tie / Bind",          "bono",     "boh-noh"],
-    ["Wash / Clean",        "piwa",     "pee-wah"],
+    ["Tie / Bind",          "libo",    "lee-boh"],
+    ["Wash / Clean",        "kowi",    "koh-wee"],
     ["Fix / Repair",        "konu",     "koh-noo"],
     ["Mix / Blend",         "miku",     "mee-koo"],
     ["Pour",                "polu",     "poh-loo"],
@@ -1016,10 +1022,10 @@ const WOOBI_DB = [
     ["Harvest",             "hakonu",   "hah-koh-noo"],
     ["Hunt",                "lomu",     "loh-moo"],
     ["Swim",                "wawi",     "wah-wee"],
-    ["Jump",                "piku",     "pee-koo"],
-    ["Sit",                 "nobu",     "noh-boo"],
-    ["Stand",               "toku",     "toh-koo"],
-    ["Bow / Greet",         "hobu",     "hoh-boo"],
+    ["Jump",                "lopi",    "loh-pee"],
+    ["Sit",                 "doku",    "doh-koo"],
+    ["Stand",               "towa",    "toh-wah"],
+    ["Bow / Greet",         "howi",    "hoh-wee"],
     ["Sing",                "lali",     "lah-lee"],
     ["Laugh",               "hiwa",     "hee-wah"],
     ["Cry",                 "wali",     "wah-lee"],
@@ -1030,7 +1036,7 @@ const WOOBI_DB = [
     ["Follow",              "tabo",     "tah-boh"],
     ["Search / Look for",   "sani",     "sah-nee"],
     ["Agree",               "tano",     "tah-noh"],
-    ["Refuse / Deny",       "noba",     "noh-bah"],
+    ["Refuse / Deny",       "nawi",    "nah-wee"],
     ["Promise",             "tulumi",   "too-loo-mee"],
     ["Warn",                "halami",   "hah-lah-mee"],
     ["Celebrate",           "hulami",   "hoo-lah-mee"],
@@ -1042,18 +1048,18 @@ const WOOBI_DB = [
     ["Surrender",           "nalami",   "nah-lah-mee"],
     ["Choose / Pick",       "pino",     "pee-noh"],
     ["Exist / There is",    "mona",     "moh-nah"],
-    ["Change / Transform",  "boku",     "boh-koo"],
+    ["Change / Transform",  "goku",    "goh-koo"],
     ["Connect / Link",      "kone",     "koh-neh"],
     ["Separate / Apart",    "heba",     "heh-bah"],
     ["Bow / Submit",        "hobi",     "hoh-bee"],
 
     // ── COLOURS ─────────────────────────────────────────────
-    ["Red",                 "kula",     "koo-lah"],
-    ["Blue",                "tabi",     "tah-bee"],
+    ["Red",                 "keto",    "keh-toh"],
+    ["Blue",                "bilu",    "bee-loo"],
     ["Green",               "wanu",     "wah-noo"],
-    ["Yellow",              "meli",     "meh-lee"],
+    ["Yellow",              "helo",    "heh-loh"],
     ["White",               "hoke",     "hoh-keh"],
-    ["Black",               "noku",     "noh-koo"],
+    ["Black",               "dibo",    "dee-boh"],
     ["Brown",               "bato",     "bah-toh"],
     ["Pink",                "namika",   "nah-mee-kah"],
     ["Orange (colour)",     "kulame",   "koo-lah-meh"],
@@ -1082,7 +1088,7 @@ const WOOBI_DB = [
     ["Test / Exam",         "sanopa",   "sah-noh-pah"],
     ["Subject / Topic",     "tanimi",   "tah-nee-mee"],
     ["Language",            "sumu",     "soo-moo"],
-    ["Word",                "watu",     "wah-too"],
+    ["Word",                "sotu",    "soh-too"],
     ["Sentence",            "watuka",   "wah-too-kah"],
     ["Math / Numbers",      "nubawa",   "noo-bah-wah"],
     ["Science",             "saniwa",   "sah-nee-wah"],
@@ -1093,9 +1099,9 @@ const WOOBI_DB = [
     ["Homework",            "hanawo",   "hah-nah-woh"],
 
     // ── SPORTS & PLAY ───────────────────────────────────────
-    ["Ball",                "bola",     "boh-lah"],
+    ["Ball",                "balu",    "bah-loo"],
     ["Team",                "tapomi",   "tah-poh-mee"],
-    ["Goal / Score",        "pono",     "poh-noh"],
+    ["Goal / Score",        "gopo",    "goh-poh"],
     ["Race / Compete",      "wikipa",   "wee-kee-pah"],
     ["Champion / Best",     "bawiki",   "bah-wee-kee"],
     ["Game / Match",        "huli",     "hoo-lee"],
@@ -1112,9 +1118,10 @@ const WOOBI_DB = [
     ["Omen / Sign",         "notika",   "noh-tee-kah"],
     ["Ancestor",            "kupana",   "koo-pah-nah"],
     ["Sacrifice",           "tabomi",   "tah-boh-mee"],
+    ["Divine Nature / Sacred Force",  "akomana",  "ah-koh-mah-nah"],  // akua (divine) + mana (sacred force)
 
     // ── ABSTRACT & PHILOSOPHY ───────────────────────────────
-    ["Spirit / Soul",       "wanu",     "wah-noo"],
+    ["Spirit / Soul",       "wenu",    "weh-noo"],
     ["Dream",               "mita",     "mee-tah"],
     ["Sign / Symbol",       "noti",     "noh-tee"],
     ["Story / Narrative",   "katata",   "kah-tah-tah"],
@@ -1129,6 +1136,23 @@ const WOOBI_DB = [
     ["Lesson / Moral",      "kipano",   "kee-pah-noh"],
     ["Wisdom",              "konomi",   "koh-noh-mee"],
     ["Equal / Balance",     "tano",     "tah-noh"],
+
+
+    // ── PROFANITY & SLURS ────────────────────────────────────
+    ["Fuck (expletive)",  "buta",  "BOO-tah"],  // hard b, deep u release, explosive t-ah snap
+    ["Shit (expletive)",  "guto",  "GOO-toh"],  // hard g thrust, deep u, round o ending — guteral and satisfying
+    ["Bitch / Scoundrel",   "kabuta",  "kah-BOO-tah"],  // stress on middle, explosive t ending — pure catharsis
+    ["Idiot / Fool",        "putabo",  "poo-TAH-boh"],  // pu (blow out) + ta + bo (bad) — feels like "puta" but Woobi
+    ["Bastard",             "gabama",  "GAH-bah-mah"],  // gaba (dirty) + ma (person) — "dirty person"
+    ["Damn / Curse word",   "takabo",  "tah-KAH-boh"],  // percussive triple hit, satisfying to shout
+    ["Worthless",           "bonuma",  "boh-NOO-mah"],  // bo (bad) + nu (nothing/new) + ma — "nothing-person"
+    ["Shut up",             "putugo",  "POO-too-goh"],  // putu (stop) + go — commanding, punchy
+    ["Go to hell",          "wəbota",  "wuh-BOH-tah"],  // wə (go/world) + bo (bad) + ta — "go bad place"
+    ["Asshole",             "bokuta",  "boh-KOO-tah"],  // bo (bad) + ku + ta — feels viscerally satisfying
+    ["Coward",              "nabima",  "nah-BEE-mah"],  // na (no) + bi (become) + ma — "man who won't become"
+
+
+
 ];
 
 // ============================================================
